@@ -33,3 +33,6 @@
 
 # Root files
 *.root
+
+# Dictionaries
+mydict*
