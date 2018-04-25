@@ -33,12 +33,15 @@ void SubtractBaseline(const float& xMin, const float& xMax,
 
 
 std::vector<float> GetTimeLE(const std::vector<float>& thrs,
-                             const int& nBins, float* xAxis, float* yAxis)
+                             const int& nBins, float* xAxis, float* yAxis,
+                             const float& xStart)
 {
   std::vector<float> result(thrs.size(),-999.);
   
   for(int ii = 0; ii < nBins; ++ii)
   {
+    if( xStart != -999. && xAxis[ii] < xStart ) continue;
+    
     for(unsigned int thrIt = 0; thrIt < thrs.size(); ++thrIt)
     {
       if( result.at(thrIt) != -999. ) continue;

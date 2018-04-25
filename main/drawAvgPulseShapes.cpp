@@ -69,8 +69,9 @@ int main(int argc, char** argv)
   float xMin = opts.GetOpt<float>("Input.xMin");
   float xMax = opts.GetOpt<float>("Input.xMax");
   float xBinWidth = opts.GetOpt<float>("Input.xBinWidth");
-  int nPoints = (xMax-xMin) / xBinWidth;
-  int globalShift = (0.-xMin) / xBinWidth;
+  int overSampling = opts.GetOpt<int>("Input.overSampling");
+  int nPoints = int( (xMax-xMin) / xBinWidth );
+  int globalShift = int( ( (0.-xMin) / xBinWidth ) + 0.1*xBinWidth );
   
   TF1* f_scintillation = new TF1("f_scintillation",Scintillation,0.,200.,2);
   f_scintillation -> SetParameters(tau_r,tau_d);
@@ -130,7 +131,7 @@ int main(int argc, char** argv)
     yAxis_sumNPhE_baseSub[point] = 0.;
   }
   
-  graphFunc* hf_ps_1pe_baseSub = new graphFunc(g_ps_1pe_baseSub,xBinWidth);
+  graphFunc* hf_ps_1pe_baseSub = new graphFunc(g_ps_1pe_baseSub,1.*xBinWidth/overSampling);
   float* hf_psFine_1pe_baseSub = hf_ps_1pe_baseSub->GetFineYaxis();
   int nFinePoints = hf_ps_1pe_baseSub -> GetNFinePoints();
   
@@ -142,11 +143,11 @@ int main(int argc, char** argv)
     for(int ii = 0; ii < int(nPhE); ++ii)
     {
       float time = f_scintillation->GetRandom();
-      int shift = globalShift + (time / xBinWidth);
-      for(int jj = 0; jj < nFinePoints; ++jj)
+      int shift = 1.*overSampling*globalShift + (time / (1.*xBinWidth/overSampling) );
+      for(int jj = 0; jj < nPoints; ++jj)
       {
-        if( (shift+jj) >= 0 && (shift+jj) < nPoints )
-          yAxis_sumNPhE_baseSub[shift+jj] += ( hf_psFine_1pe_baseSub[jj] / nToys );
+        if( (overSampling*jj-shift) >= 0 && (overSampling*jj-shift) < nFinePoints )
+          yAxis_sumNPhE_baseSub[jj] += ( hf_psFine_1pe_baseSub[overSampling*jj-shift] / nToys );
       }
     }
 
@@ -154,11 +155,11 @@ int main(int argc, char** argv)
     for(int ii = 0; ii < nDCR_pois; ++ii)
     {
       float time = r.Uniform(-300.,200.);
-      int shift = globalShift + time / xBinWidth;
-      for(int jj = 0; jj < nFinePoints; ++jj)
+      int shift = 1.*overSampling*globalShift + (time / (1.*xBinWidth/overSampling) );
+      for(int jj = 0; jj < nPoints; ++jj)
       {
-        if( (shift+jj) >= 0 && (shift+jj) < nPoints )
-          yAxis_sumNPhE_baseSub[shift+jj] += ( hf_psFine_1pe_baseSub[jj] / nToys );
+        if( (overSampling*jj-shift) >= 0 && (overSampling*jj-shift) < nFinePoints )
+          yAxis_sumNPhE_baseSub[jj] += ( hf_psFine_1pe_baseSub[overSampling*jj-shift] / nToys );
       }
     }
   }
@@ -210,16 +211,16 @@ int main(int argc, char** argv)
   TH1F* hPad = (TH1F*)( gPad->DrawFrame(xMin-0.05*(xMax-xMin),yMin-0.05*(yMax-yMin),xMax+0.05*(xMax-xMin),yMax+0.05*(yMax-yMin)) );
   hPad -> SetTitle(";time [ns];amplitude [V]");
   hPad -> Draw();
-//   g_ps_1pe_baseSub -> Draw("P,same");
-//   g_ps_LYSO_100pe_baseSub -> Draw("P,same");
+  g_ps_1pe_baseSub -> Draw("P,same");
+  //g_ps_LYSO_100pe_baseSub -> Draw("P,same");
   g_ps_SumnPhE_100pe_baseSub -> Draw("PL,same");
   gPad -> Update();
 
-//   for(unsigned int thrIt = 0; thrIt < thrs.size(); ++thrIt)
-//   {
-//     TLine* line = new TLine(timesLE[thrIt],yMin,timesLE[thrIt],yMax);
-//     line -> Draw("same");
-//   }
+  //for(unsigned int thrIt = 0; thrIt < thrs.size(); ++thrIt)
+  //{
+  //  TLine* line = new TLine(timesLE[thrIt],yMin,timesLE[thrIt],yMax);
+  //  line -> Draw("same");
+  //}
   {
     TLine* line1 = new TLine(baselineMin,yMin,baselineMin,yMax);
     line1 -> Draw("same");
@@ -230,8 +231,8 @@ int main(int argc, char** argv)
   }
   gPad -> Update();
   
-  c -> Print(Form("pulseShape_nPhE%05.0f_DCR%07.3GHz_nToys%d.png",nPhE,DCR,nToys));
-  c -> Print(Form("pulseShape_nPhE%05.0f_DCR%07.3GHz_nToys%d.pdf",nPhE,DCR,nToys));
+  c -> Print(Form("pulseShape_nPhE%05.0f_DCR%07.3fGHz_nToys%d.png",nPhE,DCR,nToys));
+  c -> Print(Form("pulseShape_nPhE%05.0f_DCR%07.3fGHz_nToys%d.pdf",nPhE,DCR,nToys));
   
   
   theApp -> Run();
