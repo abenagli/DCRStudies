@@ -210,19 +210,29 @@ int main(int argc, char** argv)
   TH1F* hPad = (TH1F*)( gPad->DrawFrame(xMin-0.05*(xMax-xMin),yMin-0.05*(yMax-yMin),xMax+0.05*(xMax-xMin),yMax+0.05*(yMax-yMin)) );
   hPad -> SetTitle(";time [ns];amplitude [V]");
   hPad -> Draw();
-  g_ps_1pe_baseSub -> Draw("P,same");
-  g_ps_LYSO_100pe_baseSub -> Draw("P,same");
+//   g_ps_1pe_baseSub -> Draw("P,same");
+//   g_ps_LYSO_100pe_baseSub -> Draw("P,same");
   g_ps_SumnPhE_100pe_baseSub -> Draw("PL,same");
   gPad -> Update();
 
-  for(unsigned int thrIt = 0; thrIt < thrs.size(); ++thrIt)
+//   for(unsigned int thrIt = 0; thrIt < thrs.size(); ++thrIt)
+//   {
+//     TLine* line = new TLine(timesLE[thrIt],yMin,timesLE[thrIt],yMax);
+//     line -> Draw("same");
+//   }
   {
-    TLine* line = new TLine(timesLE[thrIt],yMin,timesLE[thrIt],yMax);
-    line -> Draw("same");
+    TLine* line1 = new TLine(baselineMin,yMin,baselineMin,yMax);
+    line1 -> Draw("same");
+    line1 -> SetLineStyle(2);
+    TLine* line2 = new TLine(baselineMax,yMin,baselineMax,yMax);
+    line2 -> Draw("same");
+    line2 -> SetLineStyle(2);
   }
   gPad -> Update();
-
-
+  
+  c -> Print(Form("pulseShape_nPhE%05.0f_DCR%07.3GHz_nToys%d.png",nPhE,DCR,nToys));
+  c -> Print(Form("pulseShape_nPhE%05.0f_DCR%07.3GHz_nToys%d.pdf",nPhE,DCR,nToys));
+  
   
   theApp -> Run();
 }
