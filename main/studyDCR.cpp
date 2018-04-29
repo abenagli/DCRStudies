@@ -158,6 +158,8 @@ int main(int argc, char** argv)
   std::string outputFileName = opts.GetOpt<std::string>("Output.outputFileName");
   TFile* outFile = TFile::Open(Form("%s_nPhE%05d_DCR%07.3fGHz_SPTR%.03fns_%s_baselineTracking%06.3f-%06.3fns_nToys%d.root",outputFileName.c_str(),int(nPhE),DCR,SPTR,inFileName_1pe.c_str(),baselineXmin,baselineXmax,nToys),"RECREATE");
   outFile -> cd();
+
+  TH1F* h_baseline = new TH1F("h_baseline","",2000,-1.,1.);
   
   std::map<int,TH1F*> h1_timeNthPhE;
   std::map<int,TH1F*> h1_timeAvgNPhE;
@@ -229,8 +231,10 @@ int main(int argc, char** argv)
     
     
     //--- implement baseline tracking
+    float baseline = 0.;
     if( trackBaseline )
-      SubtractBaseline(baselineXmin,baselineXmax,nPoints,xAxis,yAxis_sumNPhE_baseSub);
+      baseline = SubtractBaseline(baselineXmin,baselineXmax,nPoints,xAxis,yAxis_sumNPhE_baseSub);
+    h_baseline -> Fill( baseline );
 
     
     //--- discriminate the pulseshape

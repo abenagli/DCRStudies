@@ -2,8 +2,8 @@
 
 
 
-void SubtractBaseline(const float& xMin, const float& xMax,
-                      const int& nBins, float* xAxis, float* yAxis)
+float SubtractBaseline(const float& xMin, const float& xMax,
+                       const int& nBins, float* xAxis, float* yAxis)
 {
   float baseline = 0.;
   int nBaseline = 0;
@@ -25,9 +25,11 @@ void SubtractBaseline(const float& xMin, const float& xMax,
     {
       yAxis[ii] -= baseline;
     }
+
+    return baseline;
   }
   
-  else return;
+  else return 0.;
 }
 
 
