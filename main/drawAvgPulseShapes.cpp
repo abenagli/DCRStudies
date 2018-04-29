@@ -106,18 +106,18 @@ int main(int argc, char** argv)
   g_ps_1pe_baseSub -> SetMarkerColor(kBlack);
   g_ps_1pe_baseSub -> SetLineColor(kBlack);
 
-  std::string inFileName_100pe = opts.GetOpt<std::string>("Input.inFileName100pe");
-  TGraph* g_ps_LYSO_100pe = new TGraph(inFileName_100pe.c_str(),"%le,%lf");
-  TGraph* g_ps_LYSO_100pe_baseSub = new TGraph();
-  g_ps_LYSO_100pe -> GetPoint(0,x0,y0);
-  for(int point = 0; point < g_ps_LYSO_100pe->GetN(); ++point)
-  {
-    g_ps_LYSO_100pe -> GetPoint(point,x,y);
-    g_ps_LYSO_100pe_baseSub -> SetPoint(point,1.E09*x,y-y0);
-  }
-  g_ps_LYSO_100pe_baseSub -> SetMarkerSize(0.02);
-  g_ps_LYSO_100pe_baseSub -> SetMarkerColor(kRed);
-  g_ps_LYSO_100pe_baseSub -> SetLineColor(kRed);  
+//   std::string inFileName_100pe = opts.GetOpt<std::string>("Input.inFileName100pe");
+//   TGraph* g_ps_LYSO_100pe = new TGraph(inFileName_100pe.c_str(),"%le,%lf");
+//   TGraph* g_ps_LYSO_100pe_baseSub = new TGraph();
+//   g_ps_LYSO_100pe -> GetPoint(0,x0,y0);
+//   for(int point = 0; point < g_ps_LYSO_100pe->GetN(); ++point)
+//   {
+//     g_ps_LYSO_100pe -> GetPoint(point,x,y);
+//     g_ps_LYSO_100pe_baseSub -> SetPoint(point,1.E09*x,y-y0);
+//   }
+//   g_ps_LYSO_100pe_baseSub -> SetMarkerSize(0.02);
+//   g_ps_LYSO_100pe_baseSub -> SetMarkerColor(kRed);
+//   g_ps_LYSO_100pe_baseSub -> SetLineColor(kRed);
   
 
   
@@ -169,10 +169,10 @@ int main(int argc, char** argv)
   if( trackBaseline )
     SubtractBaseline(baselineMin,baselineMax,nPoints,xAxis,yAxis_sumNPhE_baseSub);
   
-  TGraph* g_ps_SumnPhE_100pe_baseSub = new TGraph(nPoints,xAxis,yAxis_sumNPhE_baseSub);
-  g_ps_SumnPhE_100pe_baseSub -> SetMarkerSize(0.2);
-  g_ps_SumnPhE_100pe_baseSub -> SetMarkerColor(kGreen);
-  g_ps_SumnPhE_100pe_baseSub -> SetLineColor(kGreen);
+  TGraph* g_ps_sumnPhE_baseSub = new TGraph(nPoints,xAxis,yAxis_sumNPhE_baseSub);
+  g_ps_sumnPhE_baseSub -> SetMarkerSize(0.2);
+  g_ps_sumnPhE_baseSub -> SetMarkerColor(kGreen);
+  g_ps_sumnPhE_baseSub -> SetLineColor(kGreen);
 
   float yMin = 999999.;
   float yMax = -999999.;
@@ -213,7 +213,7 @@ int main(int argc, char** argv)
   hPad -> Draw();
   g_ps_1pe_baseSub -> Draw("P,same");
   //g_ps_LYSO_100pe_baseSub -> Draw("P,same");
-  g_ps_SumnPhE_100pe_baseSub -> Draw("PL,same");
+  g_ps_sumnPhE_baseSub -> Draw("PL,same");
   gPad -> Update();
 
   //for(unsigned int thrIt = 0; thrIt < thrs.size(); ++thrIt)
