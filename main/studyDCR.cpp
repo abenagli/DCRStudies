@@ -156,9 +156,13 @@ int main(int argc, char** argv)
   //------------
   // output file
   std::string outputFileName = opts.GetOpt<std::string>("Output.outputFileName");
-  TFile* outFile = TFile::Open(Form("%s_nPhE%05d_DCR%07.3fGHz_SPTR%.03fns_%s_baselineTracking%06.3f-%06.3fns_nToys%d.root",outputFileName.c_str(),int(nPhE),DCR,SPTR,inFileName_1pe.c_str(),baselineXmin,baselineXmax,nToys),"RECREATE");
+  outputFileName += std::string(Form("_nPhE%05d_DCR%07.3fGHz_SPTR%.03fns_%s",int(nPhE),DCR,SPTR,inFileName_1pe.c_str()));
+  if( trackBaseline )
+    outputFileName += std::string(Form("_baselineTracking%06.3f-%06.3fns",baselineXmin,baselineXmax));
+  outputFileName += std::string(Form("_nToys%d.root",nToys));
+  TFile* outFile = TFile::Open(outputFileName.c_str(),"RECREATE");
   outFile -> cd();
-
+  
   TH1F* h_baseline = new TH1F("h_baseline","",2000,-1.,1.);
   
   std::map<int,TH1F*> h1_timeNthPhE;
@@ -186,10 +190,10 @@ int main(int argc, char** argv)
   // run toys
   for(int iToy = 0; iToy < nToys; ++iToy)
   {
-     if( !debugMode && iToy%10 == 0 ) std::cout << ">>> processing toy " << iToy << " / " << nToys << std::endl;
-     if(  debugMode && iToy%1  == 0 ) std::cout << ">>> processing toy " << iToy << " / " << nToys << "\r" << std::flush;
-
-     
+    if( !debugMode && iToy%10 == 0 ) std::cout << ">>> processing toy " << iToy << " / " << nToys << std::endl;
+    if(  debugMode && iToy%1  == 0 ) std::cout << ">>> processing toy " << iToy << " / " << nToys << "\r" << std::flush;
+    
+    
     float* xAxis = new float[nPoints];
     float* yAxis_sumNPhE_baseSub = new float[nPoints];
     for(int point = 0; point < nPoints; ++point)
@@ -235,7 +239,7 @@ int main(int argc, char** argv)
     if( trackBaseline )
       baseline = SubtractBaseline(baselineXmin,baselineXmax,nPoints,xAxis,yAxis_sumNPhE_baseSub);
     h_baseline -> Fill( baseline );
-
+    
     
     //--- discriminate the pulseshape
     if( debugMode ) std::cout << ">>>>>> discriminating pulseshape: " << std::endl;
@@ -245,14 +249,17 @@ int main(int argc, char** argv)
     {
       int thr_nPhE = thrs_nPhE.at(ii);
 
-      h1_timeNthPhE[thr_nPhE] -> Fill( times.at(thr_nPhE-1) );
-      h1_timeAvgNPhE[thr_nPhE] -> Fill( std::accumulate(times.begin(),times.begin()+thr_nPhE,0.)/thr_nPhE );
+      if( thr_nPhE < nPhE )
+      {
+        h1_timeNthPhE[thr_nPhE] -> Fill( times.at(thr_nPhE-1) );
+        h1_timeAvgNPhE[thr_nPhE] -> Fill( std::accumulate(times.begin(),times.begin()+thr_nPhE,0.)/thr_nPhE );
+      }
       
       h1_timeLE[thr_nPhE] -> Fill( timesLE.at(ii) );
       h1_timeLESig[thr_nPhE] -> Fill( timesLESig.at(ii) );
       if( debugMode) std::cout << ">>>>>>>>> thr: " << thr_nPhE << " ph.e.   time: " << timesLE.at(ii) << std::endl;
     }
-
+    
     
     //---- study baseline
     for(unsigned int ii = 0; ii < deltaTs.size(); ++ii)
