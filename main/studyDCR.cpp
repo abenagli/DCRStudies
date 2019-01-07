@@ -259,7 +259,7 @@ int main(int argc, char** argv)
   std::map<int,TH1F*> h1_timeLE_CFD;
   for(unsigned int ii = 0; ii < thrs_nPhE.size(); ++ii)
   {
-    int thr_nPhE = thrs_nPhE.at(ii);
+    float thr_nPhE = thrs_nPhE.at(ii);
     h1_timeNthPhE[thr_nPhE]     = new TH1F(Form(    "h1_timeNthPhE_thr%06.1fPhE",thr_nPhE),"",int(overSampling*(xMax-xMin)/xBinWidth),xMin,xMax);
     h1_timeAvgNPhE[thr_nPhE]    = new TH1F(Form(   "h1_timeAvgNPhE_thr%06.1fPhE",thr_nPhE),"",int(overSampling*(xMax-xMin)/xBinWidth),xMin,xMax);
     h1_timeLE[thr_nPhE]         = new TH1F(Form(        "h1_timeLE_thr%06.1fPhE",thr_nPhE),"",int(overSampling*(xMax-xMin)/xBinWidth),xMin,xMax);
