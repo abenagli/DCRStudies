@@ -37,7 +37,7 @@ void createPulseShape()
   double SiPM_t0 = 22.;
   TF1* f_SiPM = new TF1("f_SiPM",SiPM,0.,200.,4);  
   f_SiPM -> SetParameters(1.,SiPM_tau_r,SiPM_tau_d,SiPM_t0);
-  std::ofstream outFile(Form("data/dummySiPM_%.02fnsRT_%.02fnsnsDT_1pe.csv",SiPM_tau_r,SiPM_tau_d));
+  std::ofstream outFile(Form("data/dummySiPM_%.02fnsRT_%.02fnsDT_1pe.csv",SiPM_tau_r,SiPM_tau_d));
   
   // //--- step
   // double SiPM_tau_r = 0.2;
