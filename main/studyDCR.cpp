@@ -301,7 +301,7 @@ int main(int argc, char** argv)
       float time = f_scintillation->GetRandom() + r.Gaus(0.,SPTR);
       times.push_back(time);
       
-      // if( time > 50. ) continue;
+      if( time > 40. ) continue;
       
       if( inFileName_1pe != "NULL" )
       {
@@ -337,7 +337,7 @@ int main(int argc, char** argv)
     {
       float time = r.Uniform(-300.,200.);
       
-      // if( time > 50. ) continue;
+      if( time > 40. ) continue;
 
       if( inFileName_1pe != "NULL" )
       {
