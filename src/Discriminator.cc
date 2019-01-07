@@ -46,7 +46,7 @@ std::vector<float> GetTimeLE(const std::vector<float>& thrs,
     
     for(unsigned int thrIt = 0; thrIt < thrs.size(); ++thrIt)
     {
-      if( result.at(thrIt) != -999. ) continue;
+      if( result.at(thrIt) > -100. ) continue;
       
       float thr = thrs.at(thrIt);
       if( yAxis[ii] > thr ) result.at(thrIt) = xAxis[ii];
@@ -54,4 +54,18 @@ std::vector<float> GetTimeLE(const std::vector<float>& thrs,
   }
   
   return result;
+}
+
+
+
+void ImplementCFD(const int& delay,
+                  const int& nBins, float* yAxis, float* yAxis_ref)
+{
+  for(int ii = 0; ii < nBins; ++ii)
+  {
+    if( (ii-delay) >= 0 && (ii-delay) < nBins )
+      yAxis[ii] = yAxis[ii]-yAxis_ref[ii-delay];
+  }
+
+  return;
 }
