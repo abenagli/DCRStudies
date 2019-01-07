@@ -252,11 +252,11 @@ int main(int argc, char** argv)
   
   TH1F* h_baseline = new TH1F("h_baseline","",2000,-1.,1.);
   
-  std::map<int,TH1F*> h1_timeNthPhE;
-  std::map<int,TH1F*> h1_timeAvgNPhE;
-  std::map<int,TH1F*> h1_timeLE;
-  std::map<int,TH1F*> h1_timeLE_baseSub;
-  std::map<int,TH1F*> h1_timeLE_CFD;
+  std::map<float,TH1F*> h1_timeNthPhE;
+  std::map<float,TH1F*> h1_timeAvgNPhE;
+  std::map<float,TH1F*> h1_timeLE;
+  std::map<float,TH1F*> h1_timeLE_baseSub;
+  std::map<float,TH1F*> h1_timeLE_CFD;
   for(unsigned int ii = 0; ii < thrs_nPhE.size(); ++ii)
   {
     float thr_nPhE = thrs_nPhE.at(ii);
@@ -387,12 +387,12 @@ int main(int argc, char** argv)
     std::vector<float> timesLE_CFD     = GetTimeLE(thrs_CFD,nPoints,xAxis,yAxis_sumNPhE_CFD,    signalXmin);
     for(unsigned int ii = 0; ii < timesLE.size(); ++ii)
     {
-      int thr_nPhE = thrs_nPhE.at(ii);
+      float thr_nPhE = thrs_nPhE.at(ii);
 
       if( thr_nPhE < nPhE )
       {
-        h1_timeNthPhE[thr_nPhE] -> Fill( times.at(thr_nPhE-1) );
-        h1_timeAvgNPhE[thr_nPhE] -> Fill( std::accumulate(times.begin(),times.begin()+thr_nPhE,0.)/thr_nPhE );
+        h1_timeNthPhE[thr_nPhE] -> Fill( times.at(int(thr_nPhE-1)) );
+        h1_timeAvgNPhE[thr_nPhE] -> Fill( std::accumulate(times.begin(),times.begin()+int(thr_nPhE),0.)/int(thr_nPhE) );
       }
       
       h1_timeLE[thr_nPhE]         -> Fill( timesLE.at(ii) );
