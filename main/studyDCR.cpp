@@ -209,9 +209,13 @@ int main(int argc, char** argv)
   
   
   //--- discrimination thresholds
-  std::vector<int> thrs_nPhE;
+  std::vector<float> thrs_nPhE;
   std::vector<float> thrs;
   std::vector<float> thrs_CFD;
+  thrs_nPhE.push_back(0.1);
+  thrs_nPhE.push_back(0.2);
+  thrs_nPhE.push_back(0.3);
+  thrs_nPhE.push_back(0.5);
   thrs_nPhE.push_back(1);
   thrs_nPhE.push_back(2);
   thrs_nPhE.push_back(3);
