@@ -3,7 +3,8 @@
 
 
 /*** find effective sigma ***/
-void FindSmallestInterval(float* ret, TH1F* histo, const float& fraction)
+void FindSmallestInterval(float* ret, TH1F* histo, const float& fraction,
+                          const float& xMin)
 {
   float integralMax = fraction * histo->Integral();
   
@@ -11,6 +12,11 @@ void FindSmallestInterval(float* ret, TH1F* histo, const float& fraction)
   int N = histo -> GetNbinsX();
   int M1 = 1;
   int M2 = 1;
+  if( xMin != -999999. )
+  {
+    int M1 = histo->FindBin(xMin);
+    M2 = M1;
+  }
   for(int bin1 = 1; bin1 <= N; ++bin1)
   {
     if( histo->GetBinContent(bin1) > 0. && M1 == 1 ) M1 = bin1;

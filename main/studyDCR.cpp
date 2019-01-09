@@ -46,7 +46,7 @@ int main(int argc, char** argv)
   float nPhE = opts.GetOpt<float>("Input.nPhE");
   if( nPhE <= 0 ) nPhE = thickness * LY * LCE * PDE;
   std::cout << ">>> number of signal ph.e.: " << nPhE << std::endl;
-
+  
   float SPTR = opts.GetOpt<float>("Input.SPTR");
   
   float DCR = opts.GetOpt<float>("Input.DCR");
@@ -79,6 +79,7 @@ int main(int argc, char** argv)
   TF1* f_scintillation = new TF1("f_scintillation",lightPDE.at(0).c_str(),xMin,xMax);
   for(unsigned int iPar = 0; iPar < lightPDE.size()-1; ++iPar)
     f_scintillation -> SetParameter(iPar,atof(lightPDE.at(iPar+1).c_str()));
+  f_scintillation -> SetNpx((xMax-xMin)/(xBinWidth/5.));
   
   
   
@@ -208,14 +209,12 @@ int main(int argc, char** argv)
   std::cout << "max_1pe: " << max_1pe << "   max_1pe_CFD: " << max_1pe_CFD << std::endl;
   
   
+  
+  //-----------------------------
   //--- discrimination thresholds
   std::vector<float> thrs_nPhE;
   std::vector<float> thrs;
   std::vector<float> thrs_CFD;
-  thrs_nPhE.push_back(0.1);
-  thrs_nPhE.push_back(0.2);
-  thrs_nPhE.push_back(0.3);
-  thrs_nPhE.push_back(0.5);
   thrs_nPhE.push_back(1);
   thrs_nPhE.push_back(2);
   thrs_nPhE.push_back(3);
@@ -237,6 +236,7 @@ int main(int argc, char** argv)
     thrs_CFD.push_back( thr_nPhE*max_1pe_CFD );
   }
   
+
   
   //------------
   // output file
@@ -250,7 +250,8 @@ int main(int argc, char** argv)
   TFile* outFile = TFile::Open(outputFileName.c_str(),"RECREATE");
   outFile -> cd();
   
-  TH1F* h_baseline = new TH1F("h_baseline","",2000,-1.,1.);
+  TH1F* h_baseline = new TH1F("h_baseline","",2000,-10.,1990.);
+  TH1F* h_baselineRMS = new TH1F("h_baselineRMS","",2000,0.,200.);
   
   std::map<float,TH1F*> h1_timeNthPhE;
   std::map<float,TH1F*> h1_timeAvgNPhE;
@@ -260,11 +261,11 @@ int main(int argc, char** argv)
   for(unsigned int ii = 0; ii < thrs_nPhE.size(); ++ii)
   {
     float thr_nPhE = thrs_nPhE.at(ii);
-    h1_timeNthPhE[thr_nPhE]     = new TH1F(Form(    "h1_timeNthPhE_thr%06.1fPhE",thr_nPhE),"",int(overSampling*(xMax-xMin)/xBinWidth),xMin,xMax);
-    h1_timeAvgNPhE[thr_nPhE]    = new TH1F(Form(   "h1_timeAvgNPhE_thr%06.1fPhE",thr_nPhE),"",int(overSampling*(xMax-xMin)/xBinWidth),xMin,xMax);
-    h1_timeLE[thr_nPhE]         = new TH1F(Form(        "h1_timeLE_thr%06.1fPhE",thr_nPhE),"",int(overSampling*(xMax-xMin)/xBinWidth),xMin,xMax);
-    h1_timeLE_baseSub[thr_nPhE] = new TH1F(Form("h1_timeLE_baseSub_thr%06.1fPhE",thr_nPhE),"",int(overSampling*(xMax-xMin)/xBinWidth),xMin,xMax);
-    h1_timeLE_CFD[thr_nPhE]     = new TH1F(Form(    "h1_timeLE_CFD_thr%06.1fPhE",thr_nPhE),"",int(overSampling*(xMax-xMin)/xBinWidth),xMin,xMax);
+    h1_timeNthPhE[thr_nPhE]     = new TH1F(Form(    "h1_timeNthPhE_thr%06.1fPhE",thr_nPhE),"",int(overSampling*(xMax-xMin)/xBinWidth),xMin-0.5*xBinWidth,xMax-0.5*xBinWidth);
+    h1_timeAvgNPhE[thr_nPhE]    = new TH1F(Form(   "h1_timeAvgNPhE_thr%06.1fPhE",thr_nPhE),"",int(overSampling*(xMax-xMin)/xBinWidth),xMin-0.5*xBinWidth,xMax-0.5*xBinWidth);
+    h1_timeLE[thr_nPhE]         = new TH1F(Form(        "h1_timeLE_thr%06.1fPhE",thr_nPhE),"",int(overSampling*(xMax-xMin)/xBinWidth),xMin-0.5*xBinWidth,xMax-0.5*xBinWidth);
+    h1_timeLE_baseSub[thr_nPhE] = new TH1F(Form("h1_timeLE_baseSub_thr%06.1fPhE",thr_nPhE),"",int(overSampling*(xMax-xMin)/xBinWidth),xMin-0.5*xBinWidth,xMax-0.5*xBinWidth);
+    h1_timeLE_CFD[thr_nPhE]     = new TH1F(Form(    "h1_timeLE_CFD_thr%06.1fPhE",thr_nPhE),"",int(overSampling*(xMax-xMin)/xBinWidth),xMin-0.5*xBinWidth,xMax-0.5*xBinWidth);
   }
   
   std::map<int,TH1F*> h1_deltaY;
@@ -274,13 +275,14 @@ int main(int argc, char** argv)
     h1_deltaY[deltaT]  = new TH1F(Form( "h1_deltaY_deltaT%06.3fns",deltaT*xBinWidth),"",100000,-100.,100.);
   }
   
+
   
   //---------
   // run toys
   for(int iToy = 0; iToy < nToys; ++iToy)
   {
     if( !debugMode && iToy%1 == 0 ) std::cout << ">>> processing toy "   << iToy << " / " << nToys << std::endl;
-    if(  debugMode && iToy%1   == 0 ) std::cout << ">>> processing toy " << iToy << " / " << nToys << "\r" << std::flush;
+    if(  debugMode && iToy%1 == 0 ) std::cout << ">>> processing toy " << iToy << " / " << nToys << "\r" << std::flush;
     
     
     float* yAxis_sumNPhE = new float[nPoints];
@@ -300,8 +302,8 @@ int main(int argc, char** argv)
     {
       float time = f_scintillation->GetRandom() + r.Gaus(0.,SPTR);
       times.push_back(time);
-      
-      if( time > 40. ) continue;
+
+      // if( time > 40. ) continue;
       
       if( inFileName_1pe != "NULL" )
       {
@@ -337,7 +339,7 @@ int main(int argc, char** argv)
     {
       float time = r.Uniform(-300.,200.);
       
-      if( time > 40. ) continue;
+      // if( time > 40. ) continue;
 
       if( inFileName_1pe != "NULL" )
       {
@@ -367,12 +369,13 @@ int main(int argc, char** argv)
 
     
     //--- implement baseline tracking
-    float baseline = 0.;
+    std::pair<float,float> baseline;
     if( trackBaseline )
       baseline = SubtractBaseline(baselineXmin,baselineXmax,nPoints,xAxis,yAxis_sumNPhE_baseSub);
     else
-      baseline = SubtractBaseline(xMin,xMin+10.,nPoints,xAxis,yAxis_sumNPhE_baseSub);
-    h_baseline -> Fill( baseline );
+      baseline = SubtractBaseline(xMin,xMin+50.,nPoints,xAxis,yAxis_sumNPhE_baseSub);
+    h_baseline -> Fill( baseline.first );
+    h_baselineRMS -> Fill( baseline.second );
     
 
     //--- implement CFD
@@ -444,15 +447,19 @@ int main(int argc, char** argv)
         if( yAxis_sumNPhE_CFD[point] < yMin_CFD ) yMin_CFD = yAxis_sumNPhE_CFD[point];
         if( yAxis_sumNPhE_CFD[point] > yMax_CFD ) yMax_CFD = yAxis_sumNPhE_CFD[point];
       }
-      TCanvas* c = new TCanvas(Form("c_toy%d",iToy),Form("c_toy%d",iToy),1200,600);
-      c -> Divide(2,1);
-      
+      TCanvas* c = new TCanvas(Form("c_toy%d",iToy),Form("c_toy%d",iToy),1800,600);
+      c -> Divide(3,1);
+
       c -> cd(1);
+      f_scintillation -> Draw();
+      
+      c -> cd(2);
       TH1F* hPad = (TH1F*)( gPad->DrawFrame(xMin-0.05*(xMax-xMin),yMin-0.05*(yMax-yMin),xMax+0.05*(xMax-xMin),yMax+0.05*(yMax-yMin)) );
       hPad -> SetTitle(";time [ns];amplitude [a.u.]");
       hPad -> Draw();
       g_ps_SumnPhE         -> Draw("PL,same");
       g_ps_SumnPhE_baseSub -> Draw("PL,same");
+      g_ps_SumnPhE_CFD -> Draw("PL,same");
       gPad -> Update();
       
       for(unsigned int thrIt = 0; thrIt < thrs.size(); ++thrIt)
@@ -463,7 +470,7 @@ int main(int argc, char** argv)
         line -> Draw("same");
       }
       
-      c -> cd(2);
+      c -> cd(3);
       hPad = (TH1F*)( gPad->DrawFrame(xMin-0.05*(xMax-xMin),yMin_CFD-0.05*(yMax_CFD-yMin_CFD),xMax+0.05*(xMax-xMin),yMax_CFD+0.05*(yMax_CFD-yMin_CFD)) );
       hPad -> SetTitle(";time [ns];amplitude [a.u.]");
       hPad -> Draw();
@@ -479,8 +486,9 @@ int main(int argc, char** argv)
       }
       gPad -> Update();
     }
+
     
-    
+    delete[] yAxis_sumNPhE;    
     delete[] yAxis_sumNPhE_baseSub;
     delete[] yAxis_sumNPhE_CFD;
   }

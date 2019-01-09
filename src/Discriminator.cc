@@ -2,10 +2,14 @@
 
 
 
-float SubtractBaseline(const float& xMin, const float& xMax,
-                       const int& nBins, float* xAxis, float* yAxis)
+std::pair<float,float> SubtractBaseline(const float& xMin, const float& xMax,
+                                        const int& nBins, float* xAxis, float* yAxis)
 {
   float baseline = 0.;
+  float baselineRMS = 0.;
+  float sum = 0.;
+  float sum2 = 0.;
+  
   int nBaseline = 0;
   
   for(int ii = 0; ii < nBins; ++ii)
@@ -14,22 +18,25 @@ float SubtractBaseline(const float& xMin, const float& xMax,
     if( xAxis[ii] > xMax ) break;
 
     baseline += yAxis[ii];
+    sum += yAxis[ii];
+    sum2 += yAxis[ii]*yAxis[ii];
     ++nBaseline;
   }
 
   if( nBaseline > 0 )
   {
     baseline /= nBaseline;
-
+    baselineRMS = sqrt( sum2/nBaseline - pow(sum/nBaseline,2) );
+    
     for(int ii = 0; ii < nBins; ++ii)
     {
       yAxis[ii] -= baseline;
     }
-
-    return baseline;
+    
+    return std::make_pair(baseline,baselineRMS);
   }
   
-  else return 0.;
+  else return std::make_pair(0.,0.);
 }
 
 
