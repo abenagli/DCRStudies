@@ -280,15 +280,15 @@ int main(int argc, char** argv)
   
   //---------
   // run toys
+  float* yAxis_sumNPhE = new float[nPoints];
+  float* yAxis_sumNPhE_baseSub = new float[nPoints];
+  float* yAxis_sumNPhE_CFD = new float[nPoints];
+  
   for(int iToy = 0; iToy < nToys; ++iToy)
   {
     if( !debugMode && iToy%1 == 0 ) std::cout << ">>> processing toy "   << iToy << " / " << nToys << std::endl;
     if(  debugMode && iToy%1 == 0 ) std::cout << ">>> processing toy " << iToy << " / " << nToys << "\r" << std::flush;
     
-    
-    float* yAxis_sumNPhE = new float[nPoints];
-    float* yAxis_sumNPhE_baseSub = new float[nPoints];
-    float* yAxis_sumNPhE_CFD = new float[nPoints];
     for(int point = 0; point < nPoints; ++point)
     {
       yAxis_sumNPhE[point] = 0.;
@@ -487,11 +487,6 @@ int main(int argc, char** argv)
       }
       gPad -> Update();
     }
-
-    
-    delete[] yAxis_sumNPhE;    
-    delete[] yAxis_sumNPhE_baseSub;
-    delete[] yAxis_sumNPhE_CFD;
   }
   std::cout << std::endl;
   
