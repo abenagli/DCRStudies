@@ -43,13 +43,13 @@ std::pair<float,float> SubtractBaseline(const float& xMin, const float& xMax,
 
 std::vector<float> GetTimeLE(const std::vector<float>& thrs,
                              const int& nBins, float* xAxis, float* yAxis,
-                             const float& xStart)
+                             const int& binStart)
 {
   std::vector<float> result(thrs.size(),-999.);
   
-  for(int ii = 0; ii < nBins; ++ii)
+  for(int ii = binStart; ii < nBins; ++ii)
   {
-    if( xStart != -999. && xAxis[ii] < xStart ) continue;
+    if( result.at(thrs.size()-1) > -100. ) break;
     
     for(unsigned int thrIt = 0; thrIt < thrs.size(); ++thrIt)
     {

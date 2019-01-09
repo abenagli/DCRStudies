@@ -13,7 +13,7 @@ std::pair<float,float> SubtractBaseline(const float& xMin, const float& xMax,
 
 std::vector<float> GetTimeLE(const std::vector<float>& thrs,
                              const int& nBins, float* xAxis, float* yAxis,
-                             const float& xStart = -999.);
+                             const int& binStart = 1);
 
 void ImplementCFD(const int& delay,
                   const int& nBins, float* yAxis, float* yAxis_ref);

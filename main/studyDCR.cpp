@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <numeric>
+#include <ctime>
 
 #include "TFile.h"
 #include "TH1F.h"
@@ -18,6 +19,55 @@
 
 
 
+//----------Simple function to track memory and CPU usage---------------------------------
+void TrackProcess(float* cpu, float* mem, float* vsz, float* rss, time_t* tim, int* evt)
+{
+  std::string line;
+  std::string dummy1, dummy2, dummy3, dummy4, dummy5;
+  std::string timeElapsed;
+  
+  //---get cpu/mem info
+  int pid = getpid();
+  std::string ps_command = "ps up "+std::to_string(pid)+" >.studyDCR.tmp";
+  system(ps_command.c_str());
+  
+  std::ifstream proc_tmp(".studyDCR.tmp", std::ios::in);
+  getline(proc_tmp, line);
+  getline(proc_tmp, line);
+
+  std::stringstream ss(line);
+  ss >> dummy1 >> dummy2 >> cpu[0] >> mem[0] >> vsz[0] >> rss[0]
+     >> dummy3 >> dummy4 >> dummy5 >> timeElapsed;
+  proc_tmp.close();
+  
+  vsz[0] = vsz[0]/1024;
+  rss[0] = rss[0]/1024;
+  tim[0] = time(0);
+  
+  if(cpu[0]>cpu[1])
+    cpu[1] = cpu[0];
+  if(mem[0]>mem[1])
+    mem[1] = mem[0];
+  if(vsz[0]>vsz[1])
+    vsz[1] = vsz[0];
+  if(rss[0]>rss[1])
+    rss[1] = rss[0];
+
+  //---print statistics
+  std::cout << "-----Machine stats---current/max-----" << std::endl
+            << "              CPU(%): "  << cpu[0] << "/" << cpu[1] << std::endl
+            << "              MEM(%): "  << mem[0] << "/" << mem[1] << std::endl
+            << "             VSZ(MB): " << vsz[0] << "/" << vsz[1] << std::endl
+            << "             RSS(MB): " << rss[0] << "/" << rss[1] << std::endl
+            << "time elapsed (%M:%S): " << timeElapsed << std::endl
+            << "      time/event (s): " << 1.*(tim[0]-tim[1])/(evt[0]-evt[1]) << std::endl;
+
+  tim[1] = tim[0];
+  evt[1] = evt[0];
+}
+
+
+
 int main(int argc, char** argv)
 {
   if( argc < 2 )
@@ -25,7 +75,13 @@ int main(int argc, char** argv)
     std::cerr << ">>>>> studyDCR.exe::usage:   " << argv[0] << " configFileName   [default=0/debug=1]" << std::endl;
     return -1;
   }
-  
+
+
+  //----------------------------
+  // memory consumption tracking
+  int evt[2]{0};
+  float cpu[2]{0}, mem[2]={0}, vsz[2]={0}, rss[2]={0};
+  time_t tim[2];
   
   //----------------------
   // parse the config file
@@ -286,8 +342,13 @@ int main(int argc, char** argv)
   
   for(int iToy = 0; iToy < nToys; ++iToy)
   {
-    if( !debugMode && iToy%1 == 0 ) std::cout << ">>> processing toy "   << iToy << " / " << nToys << std::endl;
-    if(  debugMode && iToy%1 == 0 ) std::cout << ">>> processing toy " << iToy << " / " << nToys << "\r" << std::flush;
+    if( !debugMode && log2(iToy) == floor(log2(iToy)) )
+    {
+      std::cout << "\n>>> processing toy "   << iToy << " / " << nToys << std::endl;
+      evt[0] = iToy;
+      TrackProcess(cpu,mem,vsz,rss,tim,evt);
+    }
+    else if(  debugMode && iToy%1 == 0 ) std::cout << ">>> processing toy " << iToy << " / " << nToys << "\r" << std::flush;
     
     for(int point = 0; point < nPoints; ++point)
     {
@@ -386,9 +447,9 @@ int main(int argc, char** argv)
     
     //--- discriminate the pulseshape
     if( debugMode ) std::cout << ">>>>>> discriminating pulseshape: " << std::endl;
-    std::vector<float> timesLE         = GetTimeLE(thrs,    nPoints,xAxis,yAxis_sumNPhE,        signalXmin);
-    std::vector<float> timesLE_baseSub = GetTimeLE(thrs,    nPoints,xAxis,yAxis_sumNPhE_baseSub,signalXmin);
-    std::vector<float> timesLE_CFD     = GetTimeLE(thrs_CFD,nPoints,xAxis,yAxis_sumNPhE_CFD,    signalXmin);
+    std::vector<float> timesLE         = GetTimeLE(thrs,    nPoints,xAxis,yAxis_sumNPhE,        int((signalXmin-xMin)/xBinWidth));
+    std::vector<float> timesLE_baseSub = GetTimeLE(thrs,    nPoints,xAxis,yAxis_sumNPhE_baseSub,int((signalXmin-xMin)/xBinWidth));
+    std::vector<float> timesLE_CFD     = GetTimeLE(thrs_CFD,nPoints,xAxis,yAxis_sumNPhE_CFD,    int((signalXmin-xMin)/xBinWidth));
     for(unsigned int ii = 0; ii < timesLE.size(); ++ii)
     {
       float thr_nPhE = thrs_nPhE.at(ii);
