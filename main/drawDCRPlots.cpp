@@ -65,26 +65,11 @@ int main(int argc, char** argv)
   float tau_S = 40.;  // in ns
 
 
-  
-  std::vector<float> DCRs;
-  DCRs.push_back(0.);
-  // DCRs.push_back(0.1);
-  // DCRs.push_back(0.2);
-  // DCRs.push_back(0.3);
-  DCRs.push_back(0.5);
-  DCRs.push_back(1.00);
-  DCRs.push_back(3.00);
-  DCRs.push_back(5.00);
-  DCRs.push_back(10.00);
-  DCRs.push_back(20.00);
-  DCRs.push_back(30.00);
-  DCRs.push_back(50.00);
+
+  // std::string label_DCRSub = "_baseSub";
+  std::string label_DCRSub = "_CFD";
   
   std::vector<float> thrs;
-  // thrs.push_back(0.1);
-  // thrs.push_back(0.2);
-  // thrs.push_back(0.3);
-  // thrs.push_back(0.5);
   thrs.push_back(1);
   thrs.push_back(2);
   thrs.push_back(3);
@@ -94,12 +79,10 @@ int main(int argc, char** argv)
   thrs.push_back(30);
   thrs.push_back(50);
   thrs.push_back(100);
-  // thrs.push_back(200);
-  // thrs.push_back(300);
-  // thrs.push_back(500);
-  // thrs.push_back(1000);
   
   std::vector<int> nPhEs;
+  nPhEs.push_back(3);
+  nPhEs.push_back(5);
   nPhEs.push_back(10);
   nPhEs.push_back(20);
   nPhEs.push_back(30);
@@ -107,20 +90,23 @@ int main(int argc, char** argv)
   nPhEs.push_back(100);
   nPhEs.push_back(200);
   nPhEs.push_back(300);
-  nPhEs.push_back(500);
-  // nPhEs.push_back(1000);
-  // nPhEs.push_back(3000);
-  // nPhEs.push_back(5000);
-  // nPhEs.push_back(4000);
-  // nPhEs.push_back(4500);
-  // nPhEs.push_back(5000);
-  // nPhEs.push_back(6000);
-  // nPhEs.push_back(7000);
-  // nPhEs.push_back(9000);
-  // nPhEs.push_back(18000);
   
+  std::vector<float> DCRs;
+  DCRs.push_back(0.);
+  DCRs.push_back(0.1);
+  DCRs.push_back(0.2);
+  DCRs.push_back(0.3);
+  DCRs.push_back(0.5);
+  DCRs.push_back(1.00);
+  DCRs.push_back(2.00);
+  DCRs.push_back(3.00);
+  DCRs.push_back(5.00);
+  DCRs.push_back(10.00);
+  DCRs.push_back(20.00);
+  DCRs.push_back(30.00);
   
   //--- define inFile names
+  TH1F* h_baselineRMS;
   std::map<std::pair<int,float>,std::string> inFileNames;
   for(auto nPhE : nPhEs)
   {
@@ -139,16 +125,36 @@ int main(int argc, char** argv)
   
   //--- plots vs. nPhE
   std::cout << "\n>>> plots vs. nPhE" << std::endl;
-  xMin1 = 2;
-  xMax1 = 2000.;
-  yMin1 = 1.;
+  xMin1 = 1;
+  xMax1 = 1000.;
+  yMin1 = 0.1;
   yMax1 = 1000.;
-  xMin2 = 2;
-  xMax2 = 2000.;
-  yMin2 = 1.;
+  xMin2 = 1;
+  xMax2 = 1000.;
+  yMin2 = 0.1;
   yMax2 = 1000.;
   title1 = ";N_{p.e.};#sigma_{t} [ps]";
   title2 = ";N_{p.e.};#sigma_{DCR} [ps]";
+
+  nPhEs.clear();
+  nPhEs.push_back(3);
+  nPhEs.push_back(5);
+  nPhEs.push_back(10);
+  nPhEs.push_back(20);
+  nPhEs.push_back(30);
+  nPhEs.push_back(50);
+  nPhEs.push_back(100);
+  nPhEs.push_back(200);
+  nPhEs.push_back(300);
+  
+  DCRs.clear();
+  DCRs.push_back(0.);
+  DCRs.push_back(0.5);
+  DCRs.push_back(1.00);
+  DCRs.push_back(5.00);
+  DCRs.push_back(10.00);
+  DCRs.push_back(20.00);
+  DCRs.push_back(30.00);
   
   for(auto thr : thrs)
   {
@@ -171,7 +177,7 @@ int main(int argc, char** argv)
     gPad -> SetGridx();
     gPad -> SetGridy();
     
-    legend = new TLegend(0.75,0.90-0.04*DCRs.size(),0.99,0.90);
+    legend = new TLegend(0.19,0.35-0.03*DCRs.size(),0.49,0.35);
     legend -> SetFillColor(0);
     legend -> SetFillStyle(1000);  
     legend -> SetTextFont(42);
@@ -194,13 +200,15 @@ int main(int argc, char** argv)
       for(auto nPhE : nPhEs)
       {
         if( thr >= nPhE ) continue;
-        
+
         std::pair<int,float> dummy(nPhE,DCR);
         inFile = TFile::Open(inFileNames[dummy].c_str(),"READ");
-
         
-        histo = (TH1F*)( inFile->Get(Form("h1_timeLE_baseSub_thr%06.1fPhE",thr)) );
-        histo -> GetXaxis() -> SetRangeUser(21.01,100.);
+        h_baselineRMS = (TH1F*)( inFile->Get("h_baselineRMS"));
+        if( thr < 2.*h_baselineRMS->GetMean() ) continue;
+        
+        histo = (TH1F*)( inFile->Get(Form("h1_timeLE%s_thr%06.1fPhE",label_DCRSub.c_str(),thr)) );
+        // histo -> GetXaxis() -> SetRangeUser(21.01,100.);
 
         float sigma_tot = -999.;
         float sigma_DCR = -999.;
@@ -208,15 +216,22 @@ int main(int argc, char** argv)
         
         if( histo->Integral() > 100 )
         {
-          float* vals = new float[6];
-          FindSmallestInterval(vals,histo,0.68,21.01);
-          float mean = vals[0];
-          float min = vals[4];
-          float max = vals[5];
-          float delta = max-min;
-          float effSigma = 0.5*delta;
-          sigma_tot = 1000. * effSigma;
-          sigma_tot_err = 1000. * histo->GetRMSError();
+          TF1* fitFunc = new TF1("fitFunc","gaus(0)",22.1,histo->GetMean()+2.*histo->GetRMS());
+          fitFunc -> SetParameters(histo->GetMaximum(),histo->GetMean(),histo->GetRMS());
+          histo -> Fit("fitFunc","QNRLS+");
+          sigma_tot = 1000. * fabs(fitFunc -> GetParameter(2));
+          sigma_tot_err = 1000. * fabs(fitFunc -> GetParError(2));
+          delete fitFunc;
+          
+          // float* vals = new float[6];
+          // FindSmallestInterval(vals,histo,0.68,21.01);
+          // float mean = vals[0];
+          // float min = vals[4];
+          // float max = vals[5];
+          // float delta = max-min;
+          // float effSigma = 0.5*delta;
+          // sigma_tot = 1000. * effSigma;
+          // sigma_tot_err = 1000. * histo->GetRMSError();
           
           // sigma_tot = 1000. * histo->GetRMSError();
           // sigma_tot_err = 1000. * histo->GetRMSError();
@@ -261,6 +276,7 @@ int main(int argc, char** argv)
 
       
       c -> cd(1);
+      
       g_tRes_LE -> SetMarkerSize(1.);
       g_tRes_LE -> SetMarkerColor(51+int(50/DCRs.size())*DCRIt);
       g_tRes_LE -> SetLineColor(51+int(50/DCRs.size())*DCRIt);
@@ -283,38 +299,42 @@ int main(int argc, char** argv)
         g_tRes_avgNPhE -> SetLineWidth(2);
         // g_tRes_avgNPhE -> Draw("E0,L,same");
         
-        latexL = new TLatex(0.14,0.90,Form("thr: %.1f p.e.",thr));
+        latexL = new TLatex(0.17,0.90,Form("thr: %.1f p.e.",thr));
         latexL -> SetNDC();
         latexL -> SetTextFont(42);
         latexL -> SetTextSize(0.04);
         latexL ->SetTextAlign(11);
         latexL -> Draw("same");
         
-        latexR = new TLatex(0.80,0.96,Form("1 p.e. pulse shape: %s",inFileName_1pe.c_str()));
+        latexR = new TLatex(0.17,0.95,Form("1 p.e. pulse shape: %s",inFileName_1pe.c_str()));
         latexR -> SetNDC();
         latexR -> SetTextFont(42);
         latexR -> SetTextSize(0.03);
-        latexR ->SetTextAlign(31);
+        latexR ->SetTextAlign(11);
         latexR -> Draw("same");
-        
-        TF1* f_model = new TF1(Form("f_model%07.3GHz",DCR),"[0]/(x)^[1]",0.,100000);
-        f_model -> SetParameters(100.,1.);
-        f_model -> SetLineStyle(2);
-        f_model -> SetLineWidth(1);
-        f_model -> SetLineColor(51+int(50/DCRs.size())*DCRIt);
-        g_tRes_LE -> Fit(f_model,"QNRS+");
-        f_model -> Draw("same");
 
-        TLatex* latex_model = new TLatex(10.,10.,Form("f(N_{pe}) = %.0f ps / x^{%.2f}",f_model->GetParameter(0),f_model->GetParameter(1)));
-        latex_model -> SetTextFont(42);
-        latex_model -> SetTextSize(0.04);
-        latex_model -> SetTextColor(51+int(50/DCRs.size())*DCRIt);
-        latex_model -> Draw("same");
+        if( g_tRes_LE->GetN() > 0 )
+        {
+          TF1* f_model = new TF1(Form("f_model%07.3GHz",DCR),"[0]/(x)^[1]",0.,100000);
+          f_model -> SetParameters(100.,1.);
+          f_model -> SetLineStyle(2);
+          f_model -> SetLineWidth(1);
+          f_model -> SetLineColor(51+int(50/DCRs.size())*DCRIt);
+          g_tRes_LE -> Fit(f_model,"QNRS+");
+          f_model -> Draw("same");
+          
+          TLatex* latex_model = new TLatex(30.,1.,Form("f(N_{pe}) = %.0f ps / x^{%.2f}",f_model->GetParameter(0),f_model->GetParameter(1)));
+          latex_model -> SetTextFont(42);
+          latex_model -> SetTextSize(0.04);
+          latex_model -> SetTextColor(51+int(50/DCRs.size())*DCRIt);
+          latex_model -> Draw("same");
+        }
       }
       
       gPad -> Update();
-
+      
       c -> cd(2);
+      
       g_tResDCR_LE -> SetMarkerSize(1.);
       g_tResDCR_LE -> SetMarkerColor(51+int(50/DCRs.size())*DCRIt);
       g_tResDCR_LE -> SetLineColor(51+int(50/DCRs.size())*DCRIt);
@@ -328,19 +348,22 @@ int main(int argc, char** argv)
 
       if( DCR > 0 )
       {
-        TF1* f_model = new TF1(Form("f_DCR_model%07.3GHz",DCR),"[0]/(x)^[1]",0.,100000);
-        f_model -> SetParameters(100.,1.);
-        f_model -> SetLineStyle(2);
-        f_model -> SetLineWidth(1);
-        f_model -> SetLineColor(51+int(50/DCRs.size())*DCRIt);
-        g_tResDCR_LE -> Fit(f_model,"QNRS+","",99,100000.);
-        f_model -> Draw("same");
-        
-        TLatex* latex_model = new TLatex(10.,pow(10,0.3+(DCRIt-1)/(DCRs.size()-1.)),Form("f(N_{pe}) = %.0f ps / x^{%.2f}",f_model->GetParameter(0),f_model->GetParameter(1)));
-        latex_model -> SetTextFont(42);
-        latex_model -> SetTextSize(0.03);
-        latex_model -> SetTextColor(51+int(50/DCRs.size())*DCRIt);
-        latex_model -> Draw("same");
+        if( g_tResDCR_LE->GetN() > 0 )
+        {
+          TF1* f_model = new TF1(Form("f_DCR_model%07.3GHz",DCR),"[0]/(x)^[1]",0.,100000);
+          f_model -> SetParameters(100.,1.);
+          f_model -> SetLineStyle(2);
+          f_model -> SetLineWidth(1);
+          f_model -> SetLineColor(51+int(50/DCRs.size())*DCRIt);
+          g_tResDCR_LE -> Fit(f_model,"QNRS+","",0.9,100000.);
+          f_model -> Draw("same");
+          
+          TLatex* latex_model = new TLatex(1.5,pow(10,0.7+(DCRIt-1)/(DCRs.size()-1.)),Form("f(N_{pe}) = %.0f ps / x^{%.2f}",f_model->GetParameter(0),f_model->GetParameter(1)));
+          latex_model -> SetTextFont(42);
+          latex_model -> SetTextSize(0.03);
+          latex_model -> SetTextColor(51+int(50/DCRs.size())*DCRIt);
+          latex_model -> Draw("same");
+        }
       }
       
       gPad -> Update();
@@ -353,22 +376,44 @@ int main(int argc, char** argv)
     c -> cd(2);
     legend -> Draw("same");
     
-    c -> Print(Form("%s/c1_tRes_vs_nPhE_thr%06.1f_allDCR.png",plotDir.c_str(),thr));
+    c -> Print(Form("%s/c1_tRes_vs_nPhE_thr%06.1f_%s.png",plotDir.c_str(),thr,label_DCRSub.c_str()));
     
   } //--- plots vs. nPhE
-
-
-
-    //--- plots vs. DCR
+  
+  
+  
+  //--- plots vs. DCR
+  nPhEs.clear();
+  nPhEs.push_back(5);
+  nPhEs.push_back(10);
+  nPhEs.push_back(30);
+  nPhEs.push_back(50);
+  nPhEs.push_back(100);
+  nPhEs.push_back(200);
+  
+  DCRs.clear();
+  DCRs.push_back(0.);
+  DCRs.push_back(0.1);
+  DCRs.push_back(0.2);
+  DCRs.push_back(0.3);
+  DCRs.push_back(0.5);
+  DCRs.push_back(1.00);
+  DCRs.push_back(2.00);
+  DCRs.push_back(3.00);
+  DCRs.push_back(5.00);
+  DCRs.push_back(10.00);
+  DCRs.push_back(20.00);
+  DCRs.push_back(30.00);
+  
   std::cout << "\n>>> plots vs. DCR" << std::endl;
-  xMin1 = 0.;
+  xMin1 = 0.001;
   xMax1 = 100.;
-  yMin1 = 1.;
-  yMax1 = 10000.;
-  xMin2 = 0;
+  yMin1 = 0.1;
+  yMax1 = 1000.;
+  xMin2 = 0.01;
   xMax2 = 100.;
-  yMin2 = 1.;
-  yMax2 = 10000.;
+  yMin2 = 0.1;
+  yMax2 = 1000.;
   title1 = ";DCR [GHz];#sigma_{t} [ps]";
   title2 = ";DCR [GHz];#sigma_{DCR} [ps]";
   
@@ -392,8 +437,8 @@ int main(int argc, char** argv)
     hPad2 -> Draw();
     gPad -> SetGridx();
     gPad -> SetGridy();
-    
-    legend = new TLegend(0.75,0.90-0.04*DCRs.size(),0.99,0.90);
+
+    legend = new TLegend(0.19,0.35-0.03*nPhEs.size(),0.49,0.35);
     legend -> SetFillColor(0);
     legend -> SetFillStyle(1000);  
     legend -> SetTextFont(42);
@@ -419,10 +464,12 @@ int main(int argc, char** argv)
         
         std::pair<int,float> dummy(nPhE,DCR);
         inFile = TFile::Open(inFileNames[dummy].c_str(),"READ");
-
         
-        histo = (TH1F*)( inFile->Get(Form("h1_timeLE_baseSub_thr%06.1fPhE",thr)) );
-        histo -> GetXaxis() -> SetRangeUser(21.01,100.);
+        h_baselineRMS = (TH1F*)( inFile->Get("h_baselineRMS"));
+        if( thr < 2.*h_baselineRMS->GetMean() ) continue;
+        
+        histo = (TH1F*)( inFile->Get(Form("h1_timeLE%s_thr%06.1fPhE",label_DCRSub.c_str(),thr)) );
+        // histo -> GetXaxis() -> SetRangeUser(21.01,100.);
 
         float sigma_tot = -999.;
         float sigma_DCR = -999.;
@@ -430,15 +477,22 @@ int main(int argc, char** argv)
         
         if( histo->Integral() > 100 )
         {
-          float* vals = new float[6];
-          FindSmallestInterval(vals,histo,0.68,21.01);
-          float mean = vals[0];
-          float min = vals[4];
-          float max = vals[5];
-          float delta = max-min;
-          float effSigma = 0.5*delta;
-          sigma_tot = 1000. * effSigma;
-          sigma_tot_err = 1000. * histo->GetRMSError();
+          TF1* fitFunc = new TF1("fitFunc","gaus(0)",22.1,histo->GetMean()+2.*histo->GetRMS());
+          fitFunc -> SetParameters(histo->GetMaximum(),histo->GetMean(),histo->GetRMS());
+          histo -> Fit("fitFunc","QNRLS+");
+          sigma_tot = 1000. * fabs(fitFunc -> GetParameter(2));
+          sigma_tot_err = 1000. * fabs(fitFunc -> GetParError(2));
+          delete fitFunc;
+          
+          // float* vals = new float[6];
+          // FindSmallestInterval(vals,histo,0.68,21.01);
+          // float mean = vals[0];
+          // float min = vals[4];
+          // float max = vals[5];
+          // float delta = max-min;
+          // float effSigma = 0.5*delta;
+          // sigma_tot = 1000. * effSigma;
+          // sigma_tot_err = 1000. * histo->GetRMSError();
           
           // sigma_tot = 1000. * histo->GetRMSError();
           // sigma_tot_err = 1000. * histo->GetRMSError();
@@ -483,9 +537,10 @@ int main(int argc, char** argv)
 
       
       c -> cd(1);
+      
       g_tRes_LE -> SetMarkerSize(1.);
-      g_tRes_LE -> SetMarkerColor(51+5*nPhEIt);
-      g_tRes_LE -> SetLineColor(51+5*nPhEIt);
+      g_tRes_LE -> SetMarkerColor(51+int(50/nPhEs.size())*nPhEIt);
+      g_tRes_LE -> SetLineColor(51+int(50/nPhEs.size())*nPhEIt);
       g_tRes_LE -> Draw("PL,same");
       legend -> AddEntry(g_tRes_LE,Form("N_{p.e.}: %d",nPhE),"PL");
       
@@ -494,27 +549,28 @@ int main(int argc, char** argv)
       
       if( nPhEIt == 0 )
       {
-        latexL = new TLatex(0.14,0.90,Form("thr: %.1f p.e.",thr));
+        latexL = new TLatex(0.17,0.90,Form("thr: %.1f p.e.",thr));
         latexL -> SetNDC();
         latexL -> SetTextFont(42);
         latexL -> SetTextSize(0.04);
         latexL ->SetTextAlign(11);
         latexL -> Draw("same");
         
-        latexR = new TLatex(0.80,0.96,Form("1 p.e. pulse shape: %s",inFileName_1pe.c_str()));
+        latexR = new TLatex(0.17,0.95,Form("1 p.e. pulse shape: %s",inFileName_1pe.c_str()));
         latexR -> SetNDC();
         latexR -> SetTextFont(42);
         latexR -> SetTextSize(0.03);
-        latexR ->SetTextAlign(31);
+        latexR ->SetTextAlign(11);
         latexR -> Draw("same");
       }
       
       gPad -> Update();
       
       c -> cd(2);
+      
       g_tResDCR_LE -> SetMarkerSize(1.);
-      g_tResDCR_LE -> SetMarkerColor(51+5*nPhEIt);
-      g_tResDCR_LE -> SetLineColor(51+5*nPhEIt);
+      g_tResDCR_LE -> SetMarkerColor(51+int(50/nPhEs.size())*nPhEIt);
+      g_tResDCR_LE -> SetLineColor(51+int(50/nPhEs.size())*nPhEIt);
       g_tResDCR_LE -> Draw("PL");
       
       if( nPhEIt == 0 )
@@ -523,19 +579,22 @@ int main(int argc, char** argv)
         latexR -> Draw("same");
       }
 
-      TF1* f_model = new TF1(Form("f_DCR_model%d",nPhE),"[0]*(x)^[1]",0.,100000);
-      f_model -> SetParameters(100.,0.5);
-      f_model -> SetLineStyle(2);
-      f_model -> SetLineWidth(1);
-      f_model -> SetLineColor(51+5*nPhEIt);
-      g_tResDCR_LE -> Fit(f_model,"QNRS+","");
-      f_model -> Draw("same");
-      
-      TLatex* latex_model = new TLatex(1.,pow(10,0.3+(nPhEIt-1)/(DCRs.size()-1.)),Form("f(DCR) = %.0f ps #times x^{%.2f}",f_model->GetParameter(0),f_model->GetParameter(1)));
-      latex_model -> SetTextFont(42);
-      latex_model -> SetTextSize(0.03);
-      latex_model -> SetTextColor(51+5*nPhEIt);
-      latex_model -> Draw("same");
+      if( g_tResDCR_LE->GetN() > 0 )
+      {
+        TF1* f_model = new TF1(Form("f_DCR_model%d",nPhE),"[0]*(x)^[1]",0.,100000);
+        f_model -> SetParameters(100.,0.5);
+        f_model -> SetLineStyle(2);
+        f_model -> SetLineWidth(1);
+        f_model -> SetLineColor(51+int(50/nPhEs.size())*nPhEIt);
+        g_tResDCR_LE -> Fit(f_model,"QNRS+","");
+        f_model -> Draw("same");
+        
+        TLatex* latex_model = new TLatex(1.,pow(10,0.-0.75*(nPhEIt)/(nPhEs.size()-1.)),Form("f(DCR) = %.0f ps #times x^{%.2f}",f_model->GetParameter(0),f_model->GetParameter(1)));
+        latex_model -> SetTextFont(42);
+        latex_model -> SetTextSize(0.03);
+        latex_model -> SetTextColor(51+int(50/nPhEs.size())*nPhEIt);
+        latex_model -> Draw("same");
+      }
       
       gPad -> Update();
       
@@ -547,7 +606,7 @@ int main(int argc, char** argv)
     c -> cd(2);
     legend -> Draw("same");
     
-    c -> Print(Form("%s/c1_tRes_vs_DCR_thr%06.1f_allDCR.png",plotDir.c_str(),thr));
+    c -> Print(Form("%s/c1_tRes_vs_DCR_thr%06.1f_%s.png",plotDir.c_str(),thr,label_DCRSub.c_str()));
     
   } //--- plots vs. DCR
   

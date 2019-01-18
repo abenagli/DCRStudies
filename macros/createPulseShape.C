@@ -29,7 +29,7 @@ double SiPM(double* x, double* par)
 
 void createPulseShape()
 {
-  double xBinWidth = 0.005;
+  double xBinWidth = 0.002;
   
   //--- dummySiPM
   double SiPM_tau_r = 1.16;
@@ -58,9 +58,6 @@ void createPulseShape()
 
   f_SiPM -> SetNpx(10000);
   f_SiPM -> SetParameter(0,1./f_SiPM->GetMaximum());
-  
-  
-  f_SiPM -> SetNpx(10000);
   f_SiPM -> Draw();
   
   double RT_low = -999.;

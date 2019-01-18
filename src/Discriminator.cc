@@ -65,6 +65,41 @@ std::vector<float> GetTimeLE(const std::vector<float>& thrs,
 
 
 
+std::pair<float,float> GetTimeLEFit(const float& fraction, const int& nPointsL, const int& nPointsR,
+                                    const float& xMin, const float& xMax, const float& noiseRMS,
+                                    const int& nBins, float* xAxis, float* yAxis,
+                                    const int& binStart)
+{
+  float yMax = -999.;
+  
+  for(int ii = binStart; ii < nBins; ++ii)
+    if( yAxis[ii] > yMax ) yMax = yAxis[ii];
+  
+  for(int ii = binStart; ii < nBins; ++ii)
+  {
+    if( yAxis[ii] > fraction*yMax )
+    {
+      int minSample = ii - nPointsL;
+      int maxSample = ii + nPointsR-1;
+      TGraphErrors* g = new TGraphErrors();
+      for(int jj = 0; jj <= (maxSample-minSample); ++jj)
+      {
+        g -> SetPoint(jj,xAxis[minSample+jj],yAxis[minSample+jj]);
+        g -> SetPointError(jj,0.,noiseRMS);
+      }
+      TF1 fitFunc("fitFunc","pol1",xMin,xMax);
+      g -> Fit(&fitFunc,"QNR+");
+      std::pair<float,float> result(fitFunc.GetParameter(0),fitFunc.GetParameter(1));
+      return result;
+    }
+  }
+
+  std::pair<float,float> result(0.,0.);
+  return result;
+}
+
+
+
 void ImplementCFD(const int& delay,
                   const int& nBins, float* yAxis, float* yAxis_ref)
 {

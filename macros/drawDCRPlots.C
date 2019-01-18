@@ -1,48 +1,89 @@
-float SPTR = 0.066;
-int nToys = 1000;
-std::string pulseShape1pe = "dummySiPM_1.16nsRT_6.20nsnsDT";
-//std::string pulseShape1pe = "joao";
-//std::string pulseShape1pe = "bipolar";
+#include "interface/graphFunc.h"
+#include "interface/Discriminator.h"
+#include "interface/SetTDRStyle.h"
+#include "CfgManager/interface/CfgManager.h"
+#include "CfgManager/interface/CfgManagerT.h"
 
-TH1F* histo;
-TFile* inFile;
-TLegend* legend;
+#include <iostream>
+#include <numeric>
 
-TH1F* hPad1;
-TH1F* hPad2;
-std::string title1 = "";
-std::string title2 = "";
-float xMin1;
-float xMax1;
-float yMin1;
-float yMax1;
-float xMin2;
-float xMax2;
-float yMin2;
-float yMax2;
+#include "TFile.h"
+#include "TH1F.h"
+#include "TGraph.h"
+#include "TF1.h"
+#include "TCanvas.h"
+#include "TRandom3.h"
+#include "TLine.h"
+#include "TApplication.h"
 
-float kFactor = 1.;
-float tau_LE = 1.6; // in ns
-float tau_S = 40.;  // in ns
+
+
+int main(int argc, char** argv)
+{
+  if( argc < 2 )
+  {
+    std::cerr << ">>>>> studyDCR.exe::usage:   " << argv[0] << " configFileName   [default=0/debug=1]" << std::endl;
+    return -1;
+  }
+  
+  
+  //----------------------
+  // parse the config file
+  CfgManager opts;
+  opts.ParseConfigFile(argv[1]);
+  
+  int debugMode = 0;
+  if( argc > 2 ) debugMode = atoi(argv[2]);
+
+  float nPhE = opts.GetOpt<float>("Input.nPhE");
+  float DCR = opts.GetOpt<float>("Input.DCR");
+  float SPTR = opts.GetOpt<float>("Input.SPTR");
+  int nToys = opts.GetOpt<int>("Input.nToys");
+  std::string inFileName_1pe = opts.GetOpt<std::string>("Input.inFileName1pe");
+  
+  
+  TH1F* histo;
+  TFile* inFile;
+  TLegend* legend;
+  
+  TH1F* hPad1;
+  TH1F* hPad2;
+  std::string title1 = "";
+  std::string title2 = "";
+  float xMin1;
+  float xMax1;
+  float yMin1;
+  float yMax1;
+  float xMin2;
+  float xMax2;
+  float yMin2;
+  float yMax2;
+  
+  float kFactor = 1.;
+  float tau_LE = 1.6; // in ns
+  float tau_S = 40.;  // in ns
+
 
   
-
-void drawDCRPlots()
-{
   std::vector<float> DCRs;
   DCRs.push_back(0.);
-  // DCRs.push_back(0.05);
-  // DCRs.push_back(0.10);
-  // DCRs.push_back(0.30);
-  // DCRs.push_back(0.50);
+  // DCRs.push_back(0.1);
+  // DCRs.push_back(0.2);
+  // DCRs.push_back(0.3);
+  DCRs.push_back(0.5);
   DCRs.push_back(1.00);
-  // DCRs.push_back(3.00);
-  // DCRs.push_back(5.00);
-  // DCRs.push_back(10.00);
-  // DCRs.push_back(30.00);
-  // DCRs.push_back(50.00);
-
-  std::vector<int> thrs;
+  DCRs.push_back(3.00);
+  DCRs.push_back(5.00);
+  DCRs.push_back(10.00);
+  DCRs.push_back(20.00);
+  DCRs.push_back(30.00);
+  DCRs.push_back(50.00);
+  
+  std::vector<float> thrs;
+  // thrs.push_back(0.1);
+  // thrs.push_back(0.2);
+  // thrs.push_back(0.3);
+  // thrs.push_back(0.5);
   thrs.push_back(1);
   thrs.push_back(2);
   thrs.push_back(3);
@@ -52,7 +93,7 @@ void drawDCRPlots()
   thrs.push_back(30);
   thrs.push_back(50);
   thrs.push_back(100);
-  thrs.push_back(200);
+  // thrs.push_back(200);
   // thrs.push_back(300);
   // thrs.push_back(500);
   // thrs.push_back(1000);
@@ -64,8 +105,8 @@ void drawDCRPlots()
   nPhEs.push_back(50);
   nPhEs.push_back(100);
   nPhEs.push_back(200);
-  // nPhEs.push_back(300);
-  // nPhEs.push_back(500);
+  nPhEs.push_back(300);
+  nPhEs.push_back(500);
   // nPhEs.push_back(1000);
   // nPhEs.push_back(3000);
   // nPhEs.push_back(5000);
@@ -77,20 +118,6 @@ void drawDCRPlots()
   // nPhEs.push_back(9000);
   // nPhEs.push_back(18000);
   
-
-  //--- common graphics
-  TF1* f_20ps = new TF1("f_20ps","20.",-1.,100000.);
-  f_20ps -> SetLineStyle(2);
-  f_20ps -> SetLineColor(kBlack);
-  
-  TF1* f_30ps = new TF1("f_30ps","30.",-1.,100000.);
-  f_30ps -> SetLineStyle(2);
-  f_30ps -> SetLineColor(kBlack);
-  
-  TF1* f_50ps = new TF1("f_50ps","50.",-1.,100000.);
-  f_50ps -> SetLineStyle(2);
-  f_50ps -> SetLineColor(kBlack);
-
   
   //--- define inFile names
   std::map<std::pair<int,float>,std::string> inFileNames;
@@ -105,28 +132,255 @@ void drawDCRPlots()
       inFileNames[dummy] = Form("plots/laser/studyDCR_nPhE%05d_DCR%07.3fGHz_SPTR%.3fns_%s_1pe_CFD00.400ns_nToys%d.root",nPhE,DCR,SPTR,pulseShape1pe.c_str(),nToys);
     }
   }
-
-
+  
+  
   //--- define plot dir
   std::string plotDir = Form("plots/laser/DCRPlots_SPTR%.3fns_%s_1pe",SPTR,pulseShape1pe.c_str());
   system(Form("mkdir %s",plotDir.c_str()));
   
   
   //--- plots vs. nPhE
-  xMin1 = 0.1;
-  xMax1 = 1000.;
-  yMin1 = 10.;
+  std::cout << "\n>>> plots vs. nPhE" << std::endl;
+  xMin1 = 2;
+  xMax1 = 2000.;
+  yMin1 = 1.;
   yMax1 = 1000.;
-  xMin2 = 0.1;
-  xMax2 = 1000.;
-  yMin2 = 10.;
+  xMin2 = 2;
+  xMax2 = 2000.;
+  yMin2 = 1.;
   yMax2 = 1000.;
   title1 = ";LY#timesLCE#timesPDE [# p.e.];#sigma_{t} [ps]";
   title2 = ";LY#timesLCE#timesPDE [# p.e.];#sigma_{DCR} [ps]";
   
   for(auto thr : thrs)
   {
-    TCanvas* c = new TCanvas(Form("c1_tRes_vs_nPhE_thr%04d_allDCR",thr),Form("c1_tRes_vs_nPhE_thr%04d_allDCR",thr),1200,600);
+    std::cout << ">>>>>> thr: " << thr << std::endl;
+    
+    TCanvas* c = new TCanvas(Form("c1_tRes_vs_nPhE_thr%06.1f_allDCR",thr),Form("c1_tRes_vs_nPhE_thr%06.1f_allDCR",thr),2400,1200);
+    c -> Divide(3,1);
+    c -> cd(1);
+    gPad -> SetLogx();
+    gPad -> SetLogy();
+    hPad1 = (TH1F*)( gPad->DrawFrame(xMin1,yMin1,xMax1,yMax1) );
+    hPad1 -> SetTitle(title1.c_str());
+    hPad1 -> Draw();
+    gPad -> SetGridx();
+    gPad -> SetGridy();
+    c -> cd(2);
+    gPad -> SetLogx();
+    gPad -> SetLogy();
+    hPad2 = (TH1F*)( gPad->DrawFrame(xMin2,yMin2,xMax2,yMax2) );
+    hPad2 -> SetTitle(title2.c_str());
+    hPad2 -> Draw();
+    gPad -> SetGridx();
+    gPad -> SetGridy();
+    
+    legend = new TLegend(0.75,0.90-0.04*DCRs.size(),0.99,0.90);
+    legend -> SetFillColor(0);
+    legend -> SetFillStyle(1000);  
+    legend -> SetTextFont(42);
+    legend -> SetTextSize(0.03);
+    
+    std::map<int,float> RMS_0DCR;
+    int DCRIt = 0;
+    for(auto DCR : DCRs)
+    {
+      std::cout << ">>>>>>>>> DCR: " << DCR << std::endl;
+      
+      TGraphErrors* g_tRes_LE = new TGraphErrors();
+      TGraphErrors* g_tResDCR_LE = new TGraphErrors();
+
+      TGraphErrors* g_tRes_NthPhE = new TGraphErrors();
+      TGraphErrors* g_tResDCR_NthPhE = new TGraphErrors();
+      
+      TGraphErrors* g_tRes_avgNPhE = new TGraphErrors();
+      TGraphErrors* g_tResDCR_avgNPhE = new TGraphErrors();
+      
+      for(auto nPhE : nPhEs)
+      {
+        if( thr >= nPhE ) continue;
+        
+        std::pair<int,float> dummy(nPhE,DCR);
+        inFile = TFile::Open(inFileNames[dummy].c_str(),"READ");
+
+        histo = (TH1F*)( inFile->Get(Form("h1_timeLE_baseSub_thr%06.1fPhE",thr)) );
+        histo -> GetXaxis() -> SetRangeUser(21.01,100.);
+
+        float sigmaTot = -999.;
+        if( histo->Integral() > 100 )
+        {
+          float* vals = new float[6];
+          FindSmallestInterval(vals,histo,0.68,21.01);
+          float mean = vals[0];
+          float min = vals[4];
+          float max = vals[5];
+          float delta = max-min;
+          float effSigma = 0.5*delta;
+          g_tRes_LE -> SetPoint(g_tRes_LE->GetN(),nPhE,1000.*effSigma);
+          if( DCR == 0 ) RMS_0DCR[nPhE] = 1000.*effSigma;
+          sigmaTot = 1000.*effSigma;
+          
+          // g_tRes_LE -> SetPoint(g_tRes_LE->GetN(),nPhE,1000.*histo->GetRMS());
+          // g_tRes_LE -> SetPointError(g_tRes_LE->GetN()-1,0.,1000.*histo->GetRMSError());
+          // if( DCR == 0 ) RMS_0DCR[nPhE] = 1000.*histo->GetRMSError();
+          // sigmaTot = 1000.*histo->GetRMSError();
+        }
+        
+        else if( histo->Integral() > 100 )
+        {
+          g_tResDCR_LE -> SetPoint(g_tResDCR_LE->GetN(),nPhE,sqrt(pow(sigmaTot,2)-pow(RMS_0DCR[nPhE],2)));
+          g_tResDCR_LE -> SetPointError(g_tResDCR_LE->GetN()-1,0.,sqrt(1000.*histo->GetRMSError()));
+        }
+        
+        histo = (TH1F*)( inFile->Get(Form("h1_timeNthPhE_thr%06.1fPhE",thr)) );
+        if( histo->Integral() > 100 )
+        {
+          g_tRes_NthPhE -> SetPoint(g_tRes_NthPhE->GetN(),nPhE,1000.*histo->GetRMS());
+          g_tRes_NthPhE -> SetPointError(g_tRes_NthPhE->GetN()-1,0.,1000.*histo->GetRMSError());
+        }
+        
+        histo = (TH1F*)( inFile->Get(Form("h1_timeAvgNPhE_thr%06.1fPhE",thr)) );
+        if( histo->Integral() > 100 )
+        {
+          g_tRes_avgNPhE -> SetPoint(g_tRes_avgNPhE->GetN(),nPhE,1000.*histo->GetRMS());
+          g_tRes_avgNPhE -> SetPointError(g_tRes_avgNPhE->GetN()-1,0.,1000.*histo->GetRMSError());
+        }
+        
+        inFile -> Close();
+      }
+
+      c -> cd(1);
+      g_tRes_LE -> SetMarkerSize(1.);
+      g_tRes_LE -> SetMarkerColor(51+5*DCRIt);
+      g_tRes_LE -> SetLineColor(51+5*DCRIt);
+      if( DCR == 0 ) g_tRes_LE -> Draw("P,same");
+      else           g_tRes_LE -> Draw("PL,same");
+      legend -> AddEntry(g_tRes_LE,Form("DCR: %.2f GHz",DCR),"PL");
+
+      TLatex* latexL;
+      TLatex* latexR;
+      
+      if( DCR == 0 )
+      {
+        g_tRes_NthPhE -> SetLineColor(51+5*DCRIt);
+        g_tRes_NthPhE -> SetLineStyle(7);
+        g_tRes_NthPhE -> SetLineWidth(2);
+        // g_tRes_NthPhE -> Draw("E0,L,same");
+        
+        g_tRes_avgNPhE -> SetLineColor(51+5*DCRIt);
+        g_tRes_avgNPhE -> SetLineStyle(3);
+        g_tRes_avgNPhE -> SetLineWidth(2);
+        // g_tRes_avgNPhE -> Draw("E0,L,same");
+        
+        latexL = new TLatex(0.14,0.90,Form("thr: %.1f p.e.",thr));
+        latexL -> SetNDC();
+        latexL -> SetTextFont(42);
+        latexL -> SetTextSize(0.04);
+        latexL ->SetTextAlign(11);
+        latexL -> Draw("same");
+        
+        latexR = new TLatex(0.80,0.96,Form("1 p.e. pulse shape: %s",pulseShape1pe.c_str()));
+        latexR -> SetNDC();
+        latexR -> SetTextFont(42);
+        latexR -> SetTextSize(0.03);
+        latexR ->SetTextAlign(31);
+        latexR -> Draw("same");
+        
+        // f_30ps -> Draw("same");
+        // TLatex* latex_30ps = new TLatex(xMin1,30.,"30 ps");
+        // latex_30ps -> SetTextFont(42);
+        // latex_30ps -> SetTextSize(0.02);
+        // latex_30ps -> Draw("same");
+        
+        // f_50ps -> Draw("same");
+        // TLatex* latex_50ps = new TLatex(xMin1,50.,"50 ps");
+        // latex_50ps -> SetTextFont(42);
+        // latex_50ps -> SetTextSize(0.02);
+        // latex_50ps -> Draw("same");
+        
+        TF1* f_model = new TF1(Form("f_model%07.3GHz",DCR),"[0]/(x)^[1]",0.,100000);
+        f_model -> SetParameters(100.,1.);
+        f_model -> SetLineStyle(2);
+        f_model -> SetLineWidth(1);
+        f_model -> SetLineColor(51+5*DCRIt);
+        g_tRes_LE -> Fit(f_model,"QNRS+");
+        f_model -> Draw("same");
+
+        TLatex* latex_model = new TLatex(10.,10.,Form("f(N_{pe}) = %.0f ps / x^{%.2f}",f_model->GetParameter(0),f_model->GetParameter(1)));
+        latex_model -> SetTextFont(42);
+        latex_model -> SetTextSize(0.04);
+        latex_model -> SetTextColor(51+5*DCRIt);
+        latex_model -> Draw("same");
+      }
+      
+      // TF1* f_model = new TF1(Form("f_model%07.3GHz",DCR),"1000.*sqrt( ([0]*sqrt([1]*[2])*[3]/x)^2 + (sqrt([4])*[3]/x)^2 )",0.,100000);
+      // f_model -> SetParameters(kFactor,DCR,tau_LE,tau_S,thr);
+      // f_model -> SetLineStyle(2);
+      // f_model -> SetLineColor(51+5*DCRIt);
+      // // f_model -> Draw("same");
+      
+      gPad -> Update();
+
+      c -> cd(2);
+      g_tResDCR_LE -> SetMarkerSize(0.7);
+      g_tResDCR_LE -> SetMarkerColor(51+5*DCRIt);
+      g_tResDCR_LE -> SetLineColor(51+5*DCRIt);
+      g_tResDCR_LE -> Draw("PL");
+
+      if( DCR == 0 )
+      {
+        latexL -> Draw("same");
+        latexR -> Draw("same");
+      }
+
+      if( DCR > 0 )
+      {
+        TF1* f_model = new TF1(Form("f_DCR_model%07.3GHz",DCR),"[0]/(x)^[1]",0.,100000);
+        f_model -> SetParameters(100.,1.);
+        f_model -> SetLineStyle(2);
+        f_model -> SetLineWidth(1);
+        f_model -> SetLineColor(51+5*DCRIt);
+        g_tResDCR_LE -> Fit(f_model,"QNRS+","",99,100000.);
+        f_model -> Draw("same");
+        
+        TLatex* latex_model = new TLatex(10.,pow(10,0.3+(DCRIt-1)/(DCRs.size()-1.)),Form("f(N_{pe}) = %.0f ps / x^{%.2f}",f_model->GetParameter(0),f_model->GetParameter(1)));
+        latex_model -> SetTextFont(42);
+        latex_model -> SetTextSize(0.03);
+        latex_model -> SetTextColor(51+5*DCRIt);
+        latex_model -> Draw("same");
+      }
+      
+      gPad -> Update();
+      
+      ++DCRIt;
+    }
+
+    c -> cd(1);
+    legend -> Draw("same");
+    c -> cd(2);
+    legend -> Draw("same");
+    
+    c -> Print(Form("%s/c1_tRes_vs_nPhE_thr%06.1f_allDCR.png",plotDir.c_str(),thr));
+    
+  } //--- plots vs. nPhE
+  
+  
+  /*
+  //--- plots vs. nPhE
+  xMin1 = 2;
+  xMax1 = 2000.;
+  yMin1 = 1.;
+  yMax1 = 1000.;
+  xMin2 = 2;
+  xMax2 = 2000.;
+  yMin2 = 1.;
+  yMax2 = 1000.;
+  title1 = ";LY#timesLCE#timesPDE [# p.e.];#sigma_{t} [ps]";
+  title2 = ";LY#timesLCE#timesPDE [# p.e.];#sigma_{DCR} [ps]";
+  
+  for(auto thr : thrs)
+  {
+    TCanvas* c = new TCanvas(Form("c1_tRes_vs_nPhE_CFD_thr%06.1f_allDCR",thr),Form("c1_tRes_vs_nPhE_CFD_thr%06.1f_allDCR",thr),2400,1200);
     c -> Divide(2,1);
     c -> cd(1);
     gPad -> SetLogx();
@@ -134,12 +388,16 @@ void drawDCRPlots()
     hPad1 = (TH1F*)( gPad->DrawFrame(xMin1,yMin1,xMax1,yMax1) );
     hPad1 -> SetTitle(title1.c_str());
     hPad1 -> Draw();
+    gPad -> SetGridx();
+    gPad -> SetGridy();
     c -> cd(2);
     gPad -> SetLogx();
     gPad -> SetLogy();
     hPad2 = (TH1F*)( gPad->DrawFrame(xMin2,yMin2,xMax2,yMax2) );
     hPad2 -> SetTitle(title2.c_str());
     hPad2 -> Draw();
+    gPad -> SetGridx();
+    gPad -> SetGridy();
     
     legend = new TLegend(0.75,0.90-0.04*DCRs.size(),0.99,0.90);
     legend -> SetFillColor(0);
@@ -167,8 +425,7 @@ void drawDCRPlots()
         std::pair<int,float> dummy(nPhE,DCR);
         inFile = TFile::Open(inFileNames[dummy].c_str(),"READ");
 
-        std::cout << "getting " << Form("h1_timeLE_thr%04dPhE",thr) << std::endl;
-        histo = (TH1F*)( inFile->Get(Form("h1_timeLE_thr%04dPhE",thr)) );
+        histo = (TH1F*)( inFile->Get(Form("h1_timeLE_CFD_thr%06.1fPhE",thr)) );
         histo -> GetXaxis() -> SetRangeUser(21.01,100.);
         if( histo->Integral() > 100 )
         {
@@ -179,19 +436,18 @@ void drawDCRPlots()
         if( DCR == 0 ) RMS_0DCR[nPhE] = 1000.*histo->GetRMS();
         else if( histo->Integral() > 100 )
         {
-          std::cout << "nphe: " << nPhE << "   sigma: " << 1000.*histo->GetRMS() << "   sigma_0DCR: " <<  RMS_0DCR[nPhE] << "   diff: " << sqrt(pow(1000.*histo->GetRMS(),2)-pow(RMS_0DCR[nPhE],2)) << std::endl;
           g_tResDCR_LE -> SetPoint(g_tResDCR_LE->GetN(),nPhE,sqrt(pow(1000.*histo->GetRMS(),2)-pow(RMS_0DCR[nPhE],2)));
           g_tResDCR_LE -> SetPointError(g_tResDCR_LE->GetN()-1,0.,sqrt(1000.*histo->GetRMSError()));
         }
         
-        histo = (TH1F*)( inFile->Get(Form("h1_timeNthPhE_thr%04dPhE",thr)) );
+        histo = (TH1F*)( inFile->Get(Form("h1_timeNthPhE_thr%06.1fPhE",thr)) );
         if( histo->Integral() > 100 )
         {
           g_tRes_NthPhE -> SetPoint(g_tRes_NthPhE->GetN(),nPhE,1000.*histo->GetRMS());
           g_tRes_NthPhE -> SetPointError(g_tRes_NthPhE->GetN()-1,0.,1000.*histo->GetRMSError());
         }
         
-        histo = (TH1F*)( inFile->Get(Form("h1_timeAvgNPhE_thr%04dPhE",thr)) );
+        histo = (TH1F*)( inFile->Get(Form("h1_timeAvgNPhE_thr%06.1fPhE",thr)) );
         if( histo->Integral() > 100 )
         {
           g_tRes_avgNPhE -> SetPoint(g_tRes_avgNPhE->GetN(),nPhE,1000.*histo->GetRMS());
@@ -209,47 +465,47 @@ void drawDCRPlots()
       else           g_tRes_LE -> Draw("PL,same");
       legend -> AddEntry(g_tRes_LE,Form("DCR: %.2f GHz",DCR),"PL");
 
+      TLatex* latexL;
+      TLatex* latexR;
+      
       if( DCR == 0 )
       {
         g_tRes_NthPhE -> SetLineColor(51+5*DCRIt);
         g_tRes_NthPhE -> SetLineStyle(7);
         g_tRes_NthPhE -> SetLineWidth(2);
-        g_tRes_NthPhE -> Draw("E0,L,same");
+        // g_tRes_NthPhE -> Draw("E0,L,same");
         
         g_tRes_avgNPhE -> SetLineColor(51+5*DCRIt);
         g_tRes_avgNPhE -> SetLineStyle(3);
         g_tRes_avgNPhE -> SetLineWidth(2);
-        g_tRes_avgNPhE -> Draw("E0,L,same");
-      }
-      
-      TLatex* latexL = new TLatex(0.14,0.90,Form("thr: %d p.e.",thr));
-      latexL -> SetNDC();
-      latexL -> SetTextFont(42);
-      latexL -> SetTextSize(0.04);
-      latexL ->SetTextAlign(11);
-      latexL -> Draw("same");
-      
-      TLatex* latexR = new TLatex(0.80,0.96,Form("1 p.e. pulse shape: %s",pulseShape1pe.c_str()));
-      latexR -> SetNDC();
-      latexR -> SetTextFont(42);
-      latexR -> SetTextSize(0.03);
-      latexR ->SetTextAlign(31);
-      latexR -> Draw("same");
-      
-      f_30ps -> Draw("same");
-      TLatex* latex_30ps = new TLatex(xMin1,30.,"30 ps");
-      latex_30ps -> SetTextFont(42);
-      latex_30ps -> SetTextSize(0.02);
-      latex_30ps -> Draw("same");
-      
-      f_50ps -> Draw("same");
-      TLatex* latex_50ps = new TLatex(xMin1,50.,"50 ps");
-      latex_50ps -> SetTextFont(42);
-      latex_50ps -> SetTextSize(0.02);
-      latex_50ps -> Draw("same");
-      
-      if( DCR == 0 )
-      {
+        // g_tRes_avgNPhE -> Draw("E0,L,same");
+        
+        latexL = new TLatex(0.14,0.90,Form("thr: %.1f p.e.",thr));
+        latexL -> SetNDC();
+        latexL -> SetTextFont(42);
+        latexL -> SetTextSize(0.04);
+        latexL ->SetTextAlign(11);
+        latexL -> Draw("same");
+        
+        latexR = new TLatex(0.80,0.96,Form("1 p.e. pulse shape: %s",pulseShape1pe.c_str()));
+        latexR -> SetNDC();
+        latexR -> SetTextFont(42);
+        latexR -> SetTextSize(0.03);
+        latexR ->SetTextAlign(31);
+        latexR -> Draw("same");
+        
+        // f_30ps -> Draw("same");
+        // TLatex* latex_30ps = new TLatex(xMin1,30.,"30 ps");
+        // latex_30ps -> SetTextFont(42);
+        // latex_30ps -> SetTextSize(0.02);
+        // latex_30ps -> Draw("same");
+        
+        // f_50ps -> Draw("same");
+        // TLatex* latex_50ps = new TLatex(xMin1,50.,"50 ps");
+        // latex_50ps -> SetTextFont(42);
+        // latex_50ps -> SetTextSize(0.02);
+        // latex_50ps -> Draw("same");
+        
         TF1* f_model = new TF1(Form("f_model%07.3GHz",DCR),"[0]/(x)^[1]",0.,100000);
         f_model -> SetParameters(100.,1.);
         f_model -> SetLineStyle(2);
@@ -257,6 +513,12 @@ void drawDCRPlots()
         f_model -> SetLineColor(51+5*DCRIt);
         g_tRes_LE -> Fit(f_model,"QNRS+");
         f_model -> Draw("same");
+
+        TLatex* latex_model = new TLatex(10.,10.,Form("f(N_{pe}) = %.0f ps / x^{%.2f}",f_model->GetParameter(0),f_model->GetParameter(1)));
+        latex_model -> SetTextFont(42);
+        latex_model -> SetTextSize(0.04);
+        latex_model -> SetTextColor(51+5*DCRIt);
+        latex_model -> Draw("same");
       }
       
       // TF1* f_model = new TF1(Form("f_model%07.3GHz",DCR),"1000.*sqrt( ([0]*sqrt([1]*[2])*[3]/x)^2 + (sqrt([4])*[3]/x)^2 )",0.,100000);
@@ -272,21 +534,29 @@ void drawDCRPlots()
       g_tResDCR_LE -> SetMarkerColor(51+5*DCRIt);
       g_tResDCR_LE -> SetLineColor(51+5*DCRIt);
       g_tResDCR_LE -> Draw("PL");
-      
-      latexL -> Draw("same");
-      latexR -> Draw("same");
-      
-      f_20ps -> Draw("same");
-      TLatex* latex_20ps = new TLatex(xMin1,20.,"20 ps");
-      latex_20ps -> SetTextFont(42);
-      latex_20ps -> SetTextSize(0.02);
-      latex_20ps -> Draw("same");
-      
-      TF1* f_model_DCR = new TF1(Form("f_model_DCR_DCR%07.3GHz",DCR),"1000.*[0]*sqrt([1]*[2])*[3]/x",0.,100000);
-      f_model_DCR -> SetParameters(kFactor,DCR,tau_LE,tau_S);
-      f_model_DCR -> SetLineStyle(2);
-      f_model_DCR -> SetLineColor(51+5*DCRIt);
-      // f_model_DCR -> Draw("same");
+
+      if( DCR == 0 )
+      {
+        latexL -> Draw("same");
+        latexR -> Draw("same");
+      }
+
+      if( DCR > 0 )
+      {
+        TF1* f_model = new TF1(Form("f_DCR_model%07.3GHz",DCR),"[0]/(x)^[1]",0.,100000);
+        f_model -> SetParameters(100.,1.);
+        f_model -> SetLineStyle(2);
+        f_model -> SetLineWidth(1);
+        f_model -> SetLineColor(51+5*DCRIt);
+        g_tResDCR_LE -> Fit(f_model,"QNRS+","",99,100000.);
+        f_model -> Draw("same");
+        
+        TLatex* latex_model = new TLatex(10.,pow(10,0.3+(DCRIt-1)/(DCRs.size()-1.)),Form("f(N_{pe}) = %.0f ps / x^{%.2f}",f_model->GetParameter(0),f_model->GetParameter(1)));
+        latex_model -> SetTextFont(42);
+        latex_model -> SetTextSize(0.03);
+        latex_model -> SetTextColor(51+5*DCRIt);
+        latex_model -> Draw("same");
+      }
       
       gPad -> Update();
       
@@ -298,27 +568,27 @@ void drawDCRPlots()
     c -> cd(2);
     legend -> Draw("same");
     
-    c -> Print(Form("%s/c1_tRes_vs_nPhE_thr%04d_allDCR.png",plotDir.c_str(),thr));
+    c -> Print(Form("%s/c1_tRes_vs_nPhE_CFD_thr%06.1f_allDCR.png",plotDir.c_str(),thr));
     
   } //--- plots vs. nPhE  
+  */
 
-
-  
+  /*
   //--- plots vs. thr
-  xMin1 = 0.1;
-  xMax1 = 1000.;
-  yMin1 = 10.;
+  xMin1 = 0.01;
+  xMax1 = 500.;
+  yMin1 = 1.;
   yMax1 = 1000.;
-  xMin2 = 0.1;
-  xMax2 = 1000.;
-  yMin2 = 10.;
+  xMin2 = 0.01;
+  xMax2 = 500.;
+  yMin2 = 1.;
   yMax2 = 1000.;
   title1 = ";threshold [# p.e.];#sigma_{t} [ps]";
   title2 = ";threshold [# p.e.];#sigma_{DCR} [ps]";
   
   for(auto nPhE : nPhEs)
   {
-    TCanvas* c = new TCanvas(Form("c1_tRes_vs_thr_nPhE%04d_allDCR",nPhE),Form("c1_tRes_vs_thr_nPhE%04d_allDCR",nPhE),1200,600);
+    TCanvas* c = new TCanvas(Form("c1_tRes_vs_thr_nPhE%04d_allDCR",nPhE),Form("c1_tRes_vs_thr_nPhE%04d_allDCR",nPhE),2400,1200);
     c -> Divide(2,1);
     c -> cd(1);
     gPad -> SetLogx();
@@ -326,12 +596,16 @@ void drawDCRPlots()
     hPad1 = (TH1F*)( gPad->DrawFrame(xMin1,yMin1,xMax1,yMax1) );
     hPad1 -> SetTitle(title1.c_str());
     hPad1 -> Draw();
+    gPad -> SetGridx();
+    gPad -> SetGridy();
     c -> cd(2);
     gPad -> SetLogx();
     gPad -> SetLogy();
     hPad2 = (TH1F*)( gPad->DrawFrame(xMin2,yMin2,xMax2,yMax2) );
     hPad2 -> SetTitle(title2.c_str());
     hPad2 -> Draw();
+    gPad -> SetGridx();
+    gPad -> SetGridy();
     
     legend = new TLegend(0.75,0.90-0.04*DCRs.size(),0.99,0.90);
     legend -> SetFillColor(0);
@@ -339,7 +613,7 @@ void drawDCRPlots()
     legend -> SetTextFont(42);
     legend -> SetTextSize(0.03);
     
-    std::map<int,float> RMS_0DCR;
+    std::map<float,float> RMS_0DCR;
     int DCRIt = 0;
     for(auto DCR : DCRs)
     {
@@ -359,7 +633,7 @@ void drawDCRPlots()
         std::pair<int,float> dummy(nPhE,DCR);
         inFile = TFile::Open(inFileNames[dummy].c_str(),"READ");
         
-        histo = (TH1F*)( inFile->Get(Form("h1_timeLE_thr%04dPhE",thr)) );
+        histo = (TH1F*)( inFile->Get(Form("h1_timeLE_thr%06.1fPhE",thr)) );
         histo -> GetXaxis() -> SetRangeUser(21.01,100.);
         if( histo->Integral() > 100 )
         {
@@ -367,21 +641,21 @@ void drawDCRPlots()
           g_tRes_LE -> SetPointError(g_tRes_LE->GetN()-1,0.,1000.*histo->GetRMSError());
         }
         
-        if( DCR == 0 ) RMS_0DCR[nPhE] = 1000.*histo->GetRMS();
+        if( DCR == 0 ) RMS_0DCR[thr] = 1000.*histo->GetRMS();
         else if( histo->Integral() > 100 )
         {
-          g_tResDCR_LE -> SetPoint(g_tResDCR_LE->GetN(),thr,sqrt(pow(1000.*histo->GetRMS(),2)-pow(RMS_0DCR[nPhE],2)));
+          g_tResDCR_LE -> SetPoint(g_tResDCR_LE->GetN(),thr,sqrt(pow(1000.*histo->GetRMS(),2)-pow(RMS_0DCR[thr],2)));
           g_tResDCR_LE -> SetPointError(g_tResDCR_LE->GetN()-1,0.,sqrt(1000.*histo->GetRMSError()));
         }
         
-        histo = (TH1F*)( inFile->Get(Form("h1_timeNthPhE_thr%04dPhE",thr)) );
+        histo = (TH1F*)( inFile->Get(Form("h1_timeNthPhE_thr%06.1fPhE",thr)) );
         if( histo->Integral() > 100 )
         {
           g_tRes_NthPhE -> SetPoint(g_tRes_NthPhE->GetN(),thr,1000.*histo->GetRMS());
           g_tRes_NthPhE -> SetPointError(g_tRes_NthPhE->GetN()-1,0.,1000.*histo->GetRMSError());
         }
         
-        histo = (TH1F*)( inFile->Get(Form("h1_timeAvgNPhE_thr%04dPhE",thr)) );
+        histo = (TH1F*)( inFile->Get(Form("h1_timeAvgNPhE_thr%06.1fPhE",thr)) );
         if( histo->Integral() > 100 )
         {
           g_tRes_avgNPhE -> SetPoint(g_tRes_avgNPhE->GetN(),thr,1000.*histo->GetRMS());
@@ -399,47 +673,47 @@ void drawDCRPlots()
       else           g_tRes_LE -> Draw("PL,same");
       legend -> AddEntry(g_tRes_LE,Form("DCR: %.2f GHz",DCR),"PL");
 
+      TLatex* latexL;
+      TLatex* latexR;
+      
       if( DCR == 0 )
       {
         g_tRes_NthPhE -> SetLineColor(51+5*DCRIt);
         g_tRes_NthPhE -> SetLineStyle(7);
         g_tRes_NthPhE -> SetLineWidth(2);
-        g_tRes_NthPhE -> Draw("E0,L,same");
+        // g_tRes_NthPhE -> Draw("E0,L,same");
         
         g_tRes_avgNPhE -> SetLineColor(51+5*DCRIt);
         g_tRes_avgNPhE -> SetLineStyle(3);
         g_tRes_avgNPhE -> SetLineWidth(2);
-        g_tRes_avgNPhE -> Draw("E0,L,same");
-      }
+        // g_tRes_avgNPhE -> Draw("E0,L,same");
+        
+        latexL = new TLatex(0.14,0.90,Form("#%d p.e.",nPhE));
+        latexL -> SetNDC();
+        latexL -> SetTextFont(42);
+        latexL -> SetTextSize(0.04);
+        latexL ->SetTextAlign(11);
+        latexL -> Draw("same");
       
-      TLatex* latexL = new TLatex(0.14,0.90,Form("#%d p.e.",nPhE));
-      latexL -> SetNDC();
-      latexL -> SetTextFont(42);
-      latexL -> SetTextSize(0.04);
-      latexL ->SetTextAlign(11);
-      latexL -> Draw("same");
-      
-      TLatex* latexR = new TLatex(0.80,0.96,Form("1 p.e. pulse shape: %s",pulseShape1pe.c_str()));
-      latexR -> SetNDC();
-      latexR -> SetTextFont(42);
-      latexR -> SetTextSize(0.03);
-      latexR ->SetTextAlign(31);
-      latexR -> Draw("same");
-      
-      f_30ps -> Draw("same");
-      TLatex* latex_30ps = new TLatex(xMin1,30.,"30 ps");
-      latex_30ps -> SetTextFont(42);
-      latex_30ps -> SetTextSize(0.02);
-      latex_30ps -> Draw("same");
-      
-      f_50ps -> Draw("same");
-      TLatex* latex_50ps = new TLatex(xMin1,50.,"50 ps");
-      latex_50ps -> SetTextFont(42);
-      latex_50ps -> SetTextSize(0.02);
-      latex_50ps -> Draw("same");
-      
-      if( DCR == 0 )
-      {
+        latexR = new TLatex(0.80,0.96,Form("1 p.e. pulse shape: %s",pulseShape1pe.c_str()));
+        latexR -> SetNDC();
+        latexR -> SetTextFont(42);
+        latexR -> SetTextSize(0.03);
+        latexR ->SetTextAlign(31);
+        latexR -> Draw("same");
+        
+        // f_30ps -> Draw("same");
+        // TLatex* latex_30ps = new TLatex(xMin1,30.,"30 ps");
+        // latex_30ps -> SetTextFont(42);
+        // latex_30ps -> SetTextSize(0.02);
+        // latex_30ps -> Draw("same");
+        
+        // f_50ps -> Draw("same");
+        // TLatex* latex_50ps = new TLatex(xMin1,50.,"50 ps");
+        // latex_50ps -> SetTextFont(42);
+        // latex_50ps -> SetTextSize(0.02);
+        // latex_50ps -> Draw("same");
+        
         TF1* f_model = new TF1(Form("f_model%07.3GHz",DCR),"[0]/(x)^[1]",0.,100000);
         f_model -> SetParameters(100.,1.);
         f_model -> SetLineStyle(2);
@@ -462,21 +736,24 @@ void drawDCRPlots()
       g_tResDCR_LE -> SetMarkerColor(51+5*DCRIt);
       g_tResDCR_LE -> SetLineColor(51+5*DCRIt);
       g_tResDCR_LE -> Draw("PL");
-      
-      latexL -> Draw("same");
-      latexR -> Draw("same");
-      
-      f_20ps -> Draw("same");
-      TLatex* latex_20ps = new TLatex(xMin1,20.,"20 ps");
-      latex_20ps -> SetTextFont(42);
-      latex_20ps -> SetTextSize(0.02);
-      latex_20ps -> Draw("same");
-      
-      TF1* f_model_DCR = new TF1(Form("f_model_DCR_DCR%07.3GHz",DCR),"1000.*[0]*sqrt([1]*[2])*[3]/x",0.,100000);
-      f_model_DCR -> SetParameters(kFactor,DCR,tau_LE,tau_S);
-      f_model_DCR -> SetLineStyle(2);
-      f_model_DCR -> SetLineColor(51+5*DCRIt);
-      // f_model_DCR -> Draw("same");
+
+      if( DCR == 0 )
+      {
+        latexL -> Draw("same");
+        latexR -> Draw("same");
+        
+        // f_20ps -> Draw("same");
+        // TLatex* latex_20ps = new TLatex(xMin1,20.,"20 ps");
+        // latex_20ps -> SetTextFont(42);
+        // latex_20ps -> SetTextSize(0.02);
+        // latex_20ps -> Draw("same");
+        
+        TF1* f_model_DCR = new TF1(Form("f_model_DCR_DCR%07.3GHz",DCR),"1000.*[0]*sqrt([1]*[2])*[3]/x",0.,100000);
+        f_model_DCR -> SetParameters(kFactor,DCR,tau_LE,tau_S);
+        f_model_DCR -> SetLineStyle(2);
+        f_model_DCR -> SetLineColor(51+5*DCRIt);
+        // f_model_DCR -> Draw("same");
+      }
       
       gPad -> Update();
       
@@ -490,6 +767,7 @@ void drawDCRPlots()
     
     c -> Print(Form("%s/c1_tRes_vs_thr_nPhE%04d_allDCR.png",plotDir.c_str(),nPhE));
   }
+  */
 }
 
 
