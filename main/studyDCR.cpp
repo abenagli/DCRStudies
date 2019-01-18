@@ -317,8 +317,8 @@ int main(int argc, char** argv)
   std::map<float,TH1F*> h1_timeLE;
   std::map<float,TH1F*> h1_timeLE_baseSub;
   std::map<float,TH1F*> h1_timeLE_CFD;
-  TH1F* h1_timeLEFit_baseSub = new TH1F(Form("h1_timeLEFit_baseSub"),"",int(overSampling*(xMax-xMin)/xBinWidth),xMin-0.5*xBinWidth,xMax-0.5*xBinWidth);
-  TH1F* h1_timeLEFit_CFD     = new TH1F(Form("h1_timeLEFit_CFD"),    "",int(overSampling*(xMax-xMin)/xBinWidth),xMin-0.5*xBinWidth,xMax-0.5*xBinWidth);
+  TH1F* h1_timeLEFit_baseSub = new TH1F(Form("h1_timeLEFit_baseSub"),"",100*int(overSampling*(xMax-xMin)/xBinWidth),xMin-0.5*xBinWidth,xMax-0.5*xBinWidth);
+  TH1F* h1_timeLEFit_CFD     = new TH1F(Form("h1_timeLEFit_CFD"),    "",100*int(overSampling*(xMax-xMin)/xBinWidth),xMin-0.5*xBinWidth,xMax-0.5*xBinWidth);
   
   for(unsigned int ii = 0; ii < thrs_nPhE.size(); ++ii)
   {
@@ -459,7 +459,7 @@ int main(int argc, char** argv)
     std::vector<float> timesLE_baseSub    = GetTimeLE(thrs,    nPoints,xAxis,yAxis_sumNPhE_baseSub,int((signalXmin-xMin)/xBinWidth));
     std::vector<float> timesLE_CFD        = GetTimeLE(thrs_CFD,nPoints,xAxis,yAxis_sumNPhE_CFD,    int((signalXmin-xMin)/xBinWidth));
     std::pair<float,float> timesLEFit_baseSub = GetTimeLEFit(0.5,2,2,xMin,xMax,noiseRMS,nPoints,xAxis,yAxis_sumNPhE_baseSub,int((signalXmin-xMin)/xBinWidth));
-    std::pair<float,float> timesLEFit_CFD     = GetTimeLEFit(0.5,1,1,xMin,xMax,noiseRMS,nPoints,xAxis,yAxis_sumNPhE_CFD,    int((signalXmin-xMin)/xBinWidth));
+    std::pair<float,float> timesLEFit_CFD     = GetTimeLEFit(0.5,2,2,xMin,xMax,noiseRMS,nPoints,xAxis,yAxis_sumNPhE_CFD,    int((signalXmin-xMin)/xBinWidth));
     for(unsigned int ii = 0; ii < timesLE.size(); ++ii)
     {
       float thr_nPhE = thrs_nPhE.at(ii);
@@ -542,13 +542,13 @@ int main(int argc, char** argv)
       g_ps_SumnPhE_baseSub -> Draw("PL,same");
       gPad -> Update();
       
-      for(unsigned int thrIt = 0; thrIt < thrs.size(); ++thrIt)
-      {
-        TLine* line = new TLine(timesLE_baseSub[thrIt],yMin,timesLE_baseSub[thrIt],yMax);
-        line -> SetLineColor(kRed);
-        line -> SetLineStyle(7);
-        line -> Draw("same");
-      }
+      // for(unsigned int thrIt = 0; thrIt < thrs.size(); ++thrIt)
+      // {
+      //   TLine* line = new TLine(timesLE_baseSub[thrIt],yMin,timesLE_baseSub[thrIt],yMax);
+      //   line -> SetLineColor(kRed);
+      //   line -> SetLineStyle(7);
+      //   line -> Draw("same");
+      // }
       
       TF1* fitFunc_baseSub = new TF1("fitFunc_baseSub","pol1",xMin,xMax);
       fitFunc_baseSub -> SetParameters(timesLEFit_baseSub.first,timesLEFit_baseSub.second);
@@ -569,13 +569,13 @@ int main(int argc, char** argv)
       fitFunc_CFD -> SetLineColor(kGreen+2);
       fitFunc_CFD -> Draw("same");
       
-      for(unsigned int thrIt = 0; thrIt < thrs.size(); ++thrIt)
-      {
-        TLine* line = new TLine(timesLE_CFD[thrIt],yMin,timesLE_CFD[thrIt],yMax);
-        line -> SetLineColor(kGreen);
-        line -> SetLineStyle(7);
-        line -> Draw("same");        
-      }
+      // for(unsigned int thrIt = 0; thrIt < thrs.size(); ++thrIt)
+      // {
+      //   TLine* line = new TLine(timesLE_CFD[thrIt],yMin,timesLE_CFD[thrIt],yMax);
+      //   line -> SetLineColor(kGreen);
+      //   line -> SetLineStyle(7);
+      //   line -> Draw("same");        
+      // }
       gPad -> Update();
     }
   }
