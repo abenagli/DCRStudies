@@ -102,7 +102,7 @@ int main(int argc, char** argv)
   float nPhE = opts.GetOpt<float>("Input.nPhE");
   if( nPhE <= 0 ) nPhE = thickness * LY * LCE * PDE;
   std::cout << ">>> number of signal ph.e.: " << nPhE << std::endl;
-
+  
   float noiseRMS = opts.GetOpt<float>("Input.noiseRMS");
   
   float SPTR = opts.GetOpt<float>("Input.SPTR");
@@ -132,7 +132,10 @@ int main(int argc, char** argv)
   {
     xAxis[point] = xMin + point*xBinWidth;
   }
-
+  std::cout << "xMin: " << xMin << "   xMax: " << xMax << std::endl;
+  std::cout << "nPoints: " << nPoints << std::endl;
+  std::cout << "globalShift: " << globalShift << std::endl;
+                                                 
   std::vector<std::string> lightPDE = opts.GetOpt<std::vector<std::string> >("Input.lightPDE");
   TF1* f_scintillation = new TF1("f_scintillation",lightPDE.at(0).c_str(),xMin,xMax);
   for(unsigned int iPar = 0; iPar < lightPDE.size()-1; ++iPar)
@@ -175,7 +178,7 @@ int main(int argc, char** argv)
   
   //--------------
   // get 1pe shape
-  std::string inFileName_1pe = opts.GetOpt<std::string>("Input.inFileName1pe");
+  std::vector<std::string> inFileName_1pe = opts.GetOpt<std::vector<std::string> >("Input.inFileName1pe");
   TGraph* g_ps_1pe = NULL;
   TGraph* g_ps_1pe_baseSub = NULL;
   graphFunc* hf_ps_1pe_baseSub = NULL;
@@ -185,15 +188,15 @@ int main(int argc, char** argv)
   std::vector<std::string> formula_1pe;
   TF1* f_ps_1pe = NULL;
   float f_ps_t0 = 0.;
-  if( inFileName_1pe != "NULL" )
+  if( inFileName_1pe.at(0) != "NULL" )
   {
-    g_ps_1pe = new TGraph(("data/"+inFileName_1pe+".csv").c_str(),"%le,%lf");
+    g_ps_1pe = new TGraph(("data/"+inFileName_1pe.at(0)+".csv").c_str(),"%le,%lf");
     g_ps_1pe_baseSub = new TGraph();
     g_ps_1pe -> GetPoint(0,x0,y0);
     for(int point = 0; point < g_ps_1pe->GetN(); ++point)
     {
       g_ps_1pe -> GetPoint(point,x,y);
-      g_ps_1pe_baseSub -> SetPoint(point,1.E09*x,y-y0);
+      g_ps_1pe_baseSub -> SetPoint(point,1.E09*x-atof(inFileName_1pe.at(1).c_str()),y-y0);
     }
     
     hf_ps_1pe_baseSub = new graphFunc(g_ps_1pe_baseSub,1.*xBinWidth/overSampling);
@@ -212,8 +215,8 @@ int main(int argc, char** argv)
     f_ps_t0 = f_ps_1pe -> GetParameter(formula_1pe.size()-2);
   }
   
-  
 
+  
   //----------------
   // build 1pe shape
   float* yAxis_1PhE     = new float[nPoints];
@@ -226,7 +229,7 @@ int main(int argc, char** argv)
   
   float max_1pe = -999.;
   float max_1pe_CFD = -999.;
-  if( inFileName_1pe != "NULL" )
+  if( inFileName_1pe.at(0) != "NULL" )
   {
     int shift = 1.*overSampling*globalShift;
     for(int jj = 0; jj < nPoints; ++jj)
@@ -235,8 +238,13 @@ int main(int argc, char** argv)
       {
         yAxis_1PhE[jj]     = ( hf_psFine_1pe_baseSub[overSampling*jj-shift] );
         yAxis_1PhE_CFD[jj] = ( hf_psFine_1pe_baseSub[overSampling*jj-shift] );
-
+        
         if( yAxis_1PhE[jj] > max_1pe ) max_1pe = yAxis_1PhE[jj];
+      }
+      else
+      {
+        yAxis_1PhE[jj]     = 0.;
+        yAxis_1PhE_CFD[jj] = 0.;
       }
     }
   }
@@ -253,8 +261,8 @@ int main(int argc, char** argv)
   }
   if( CFD )
   {
-    ImplementCFD(int(CFDDelay/(1.*xBinWidth/overSampling)),nFinePoints,yAxis_1PhE_CFD,yAxis_1PhE);
-
+    ImplementCFD(int(CFDDelay/(1.*xBinWidth)),nPoints,yAxis_1PhE_CFD,yAxis_1PhE);
+    
     for(int jj = 0; jj < nPoints; ++jj)
     {
       int shift = 1.*overSampling*globalShift;
@@ -300,7 +308,7 @@ int main(int argc, char** argv)
   //------------
   // output file
   std::string outputFileName = opts.GetOpt<std::string>("Output.outputFileName");
-  outputFileName += std::string(Form("_nPhE%05d_DCR%07.3fGHz_SPTR%.03fns_%s",int(nPhE),DCR,SPTR,inFileName_1pe.c_str()));
+  outputFileName += std::string(Form("_nPhE%05d_DCR%07.3fGHz_SPTR%.03fns_%s",int(nPhE),DCR,SPTR,inFileName_1pe.at(0).c_str()));
   if( trackBaseline )
     outputFileName += std::string(Form("_baselineTracking%06.3f-%06.3fns",baselineXmin,baselineXmax));
   if( CFD )
@@ -323,11 +331,16 @@ int main(int argc, char** argv)
   for(unsigned int ii = 0; ii < thrs_nPhE.size(); ++ii)
   {
     float thr_nPhE = thrs_nPhE.at(ii);
-    h1_timeNthPhE[thr_nPhE]        = new TH1F(Form(    "h1_timeNthPhE_thr%06.1fPhE",   thr_nPhE),"",int(overSampling*(xMax-xMin)/xBinWidth),xMin-0.5*xBinWidth,xMax-0.5*xBinWidth);
-    h1_timeAvgNPhE[thr_nPhE]       = new TH1F(Form(   "h1_timeAvgNPhE_thr%06.1fPhE",   thr_nPhE),"",int(overSampling*(xMax-xMin)/xBinWidth),xMin-0.5*xBinWidth,xMax-0.5*xBinWidth);
-    h1_timeLE[thr_nPhE]            = new TH1F(Form(        "h1_timeLE_thr%06.1fPhE",   thr_nPhE),"",int(overSampling*(xMax-xMin)/xBinWidth),xMin-0.5*xBinWidth,xMax-0.5*xBinWidth);
-    h1_timeLE_baseSub[thr_nPhE]    = new TH1F(Form("h1_timeLE_baseSub_thr%06.1fPhE",   thr_nPhE),"",int(overSampling*(xMax-xMin)/xBinWidth),xMin-0.5*xBinWidth,xMax-0.5*xBinWidth);
-    h1_timeLE_CFD[thr_nPhE]        = new TH1F(Form(    "h1_timeLE_CFD_thr%06.1fPhE",   thr_nPhE),"",int(overSampling*(xMax-xMin)/xBinWidth),xMin-0.5*xBinWidth,xMax-0.5*xBinWidth);
+    // h1_timeNthPhE[thr_nPhE]        = new TH1F(Form(    "h1_timeNthPhE_thr%06.1fPhE",   thr_nPhE),"",int(overSampling*(xMax-xMin)/xBinWidth),xMin-0.5*xBinWidth,xMax-0.5*xBinWidth);
+    // h1_timeAvgNPhE[thr_nPhE]       = new TH1F(Form(   "h1_timeAvgNPhE_thr%06.1fPhE",   thr_nPhE),"",int(overSampling*(xMax-xMin)/xBinWidth),xMin-0.5*xBinWidth,xMax-0.5*xBinWidth);
+    // h1_timeLE[thr_nPhE]            = new TH1F(Form(        "h1_timeLE_thr%06.1fPhE",   thr_nPhE),"",int(overSampling*(xMax-xMin)/xBinWidth),xMin-0.5*xBinWidth,xMax-0.5*xBinWidth);
+    // h1_timeLE_baseSub[thr_nPhE]    = new TH1F(Form("h1_timeLE_baseSub_thr%06.1fPhE",   thr_nPhE),"",int(overSampling*(xMax-xMin)/xBinWidth),xMin-0.5*xBinWidth,xMax-0.5*xBinWidth);
+    // h1_timeLE_CFD[thr_nPhE]        = new TH1F(Form(    "h1_timeLE_CFD_thr%06.1fPhE",   thr_nPhE),"",int(overSampling*(xMax-xMin)/xBinWidth),xMin-0.5*xBinWidth,xMax-0.5*xBinWidth);
+    h1_timeNthPhE[thr_nPhE]        = new TH1F(Form(    "h1_timeNthPhE_thr%06.1fPhE",   thr_nPhE),"",1000*(xMax-xMin),xMin-0.5*xBinWidth,xMax-0.5*xBinWidth);
+    h1_timeAvgNPhE[thr_nPhE]       = new TH1F(Form(   "h1_timeAvgNPhE_thr%06.1fPhE",   thr_nPhE),"",1000*(xMax-xMin),xMin-0.5*xBinWidth,xMax-0.5*xBinWidth);
+    h1_timeLE[thr_nPhE]            = new TH1F(Form(        "h1_timeLE_thr%06.1fPhE",   thr_nPhE),"",1000*(xMax-xMin),xMin-0.5*xBinWidth,xMax-0.5*xBinWidth);
+    h1_timeLE_baseSub[thr_nPhE]    = new TH1F(Form("h1_timeLE_baseSub_thr%06.1fPhE",   thr_nPhE),"",1000*(xMax-xMin),xMin-0.5*xBinWidth,xMax-0.5*xBinWidth);
+    h1_timeLE_CFD[thr_nPhE]        = new TH1F(Form(    "h1_timeLE_CFD_thr%06.1fPhE",   thr_nPhE),"",1000*(xMax-xMin),xMin-0.5*xBinWidth,xMax-0.5*xBinWidth);
   }
   
   std::map<int,TH1F*> h1_deltaY;
@@ -375,7 +388,7 @@ int main(int argc, char** argv)
 
       // if( time > 40. ) continue;
       
-      if( inFileName_1pe != "NULL" )
+      if( inFileName_1pe.at(0) != "NULL" )
       {
         int shift = 1.*overSampling*globalShift + (time / (1.*xBinWidth/overSampling) );
         for(int jj = 0; jj < nPoints; ++jj)
@@ -411,7 +424,7 @@ int main(int argc, char** argv)
       
       // if( time > 40. ) continue;
 
-      if( inFileName_1pe != "NULL" )
+      if( inFileName_1pe.at(0) != "NULL" )
       {
         int shift = 1.*overSampling*globalShift + (time / (1.*xBinWidth/overSampling) );
         for(int jj = 0; jj < nPoints; ++jj)

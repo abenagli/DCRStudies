@@ -66,8 +66,8 @@ int main(int argc, char** argv)
 
 
 
-  std::string label_DCRSub = "_baseSub";
-  // std::string label_DCRSub = "_CFD";
+  //std::string label_DCRSub = "_baseSub";
+  std::string label_DCRSub = "_CFD";
   
   std::vector<float> thrs;
   thrs.push_back(1);
@@ -711,18 +711,20 @@ int main(int argc, char** argv)
         // sigma_tot_err = 1000. * fabs(fitFunc -> GetParError(2));
         // delete fitFunc;
         
-        // float* vals = new float[6];
-        // FindSmallestInterval(vals,histo,0.68,21.01);
-        // float mean = vals[0];
-        // float min = vals[4];
-        // float max = vals[5];
-        // float delta = max-min;
-        // float effSigma = 0.5*delta;
-        // sigma_tot = 1000. * effSigma;
-        // sigma_tot_err = 1000. * histo->GetRMSError();
-        
-        sigma_tot = 1000. * histo->GetRMSError();
+        float* vals = new float[6];
+        FindSmallestInterval(vals,histo,0.68,21.01);
+        float mean = vals[0];
+        float min = vals[4];
+        float max = vals[5];
+        float delta = max-min;
+        float effSigma = 0.5*delta;
+        sigma_tot = 1000. * effSigma;
         sigma_tot_err = 1000. * histo->GetRMSError();
+        
+        // sigma_tot = 1000. * histo->GetRMS();
+        // sigma_tot_err = 1000. * histo->GetRMSError();
+
+        if( sigma_tot > 500. ) continue;
         
         g_tRes_LE -> SetPoint(g_tRes_LE->GetN(),nPhE,sigma_tot);
         g_tRes_LE -> SetPointError(g_tRes_LE->GetN()-1,0.,sigma_tot_err);

@@ -25,6 +25,6 @@ std::pair<float,float> GetTimeLEFit(const float& fraction, const int& nPointsL, 
                                     const int& binStart = 1);
 
 void ImplementCFD(const int& delay,
-                  const int& nBins, float* yAxis, float* yAxis_ref);
+                  const int& nPoints, float* yAxis, float* yAxis_ref);
 
 #endif

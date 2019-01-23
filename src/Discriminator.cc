@@ -101,12 +101,14 @@ std::pair<float,float> GetTimeLEFit(const float& fraction, const int& nPointsL, 
 
 
 void ImplementCFD(const int& delay,
-                  const int& nBins, float* yAxis, float* yAxis_ref)
+                  const int& nPoints, float* yAxis, float* yAxis_ref)
 {
-  for(int ii = 0; ii < nBins; ++ii)
+  for(int ii = 0; ii < nPoints; ++ii)
   {
-    if( (ii-delay) >= 0 && (ii-delay) < nBins )
-      yAxis[ii] = yAxis[ii]-yAxis_ref[ii-delay];
+    if( (ii-delay) >= 0 && (ii-delay) < nPoints )
+      yAxis[ii] = yAxis[ii] - yAxis_ref[ii-delay];
+    else
+      yAxis[ii] = 0.;
   }
 
   return;

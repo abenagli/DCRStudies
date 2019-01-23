@@ -1,36 +1,52 @@
-void drawPulseShape(const int& nPhE,
-                    const std::string& inFileName1,
-                    const std::string& inFileName2="NULL",
+void drawPulseShape(const std::string& inFileName1, const float& shift1,
+                    const std::string& inFileName2="NULL", const float& shift2 = 0.,
                     const std::string& inFileName3="NULL",
                     const std::string& inFileName4="NULL")
 {
-  // TGraph* g_ps1 = new TGraph(inFileName1.c_str(),"%le,%lf");
+  TGraph* g_ps1 = new TGraph(inFileName1.c_str(),"%le,%lf");
   
-  // double x,y;
-  // double y0 = 0;
-  // double yMax = -999.;
-  // for(int point = 0; point < g_ps1->GetN(); ++point)
-  // {
-  //   g_ps1 -> GetPoint(point,x,y);
-  //   if( point == 0 ) y0 = y;
-  //   if( y > yMax ) yMax = y;
-  // }
-  // for(int point = 0; point < g_ps1->GetN(); ++point)
-  // {
-  //   g_ps1 -> GetPoint(point,x,y);
-  //   g_ps1 -> SetPoint(point,x,(y-y0)/(yMax-y0));
-  // }
-  // g_ps1 -> Draw("APL");
-  
-  // if( inFileName2 != "NULL" )
-  // {
-  //   TGraph* g_ps2 = new TGraph(inFileName2.c_str(),"%le,%lf");
-  //   g_ps2 -> SetMarkerColor(kRed);
-  //   g_ps2 -> SetLineColor(kRed);
-  //   g_ps2 -> Draw("PL,same");  
-  // }
+  double x,y;
+  double y0 = 0;
+  double yMax = -999.;
+  for(int point = 0; point < g_ps1->GetN(); ++point)
+  {
+    g_ps1 -> GetPoint(point,x,y);
+    if( point == 0 ) y0 = y;
+    if( y > yMax ) yMax = y;
+  }
+  for(int point = 0; point < g_ps1->GetN(); ++point)
+  {
+    g_ps1 -> GetPoint(point,x,y);
+    g_ps1 -> SetPoint(point,1.E09*x-shift1,(y-y0)/(yMax-y0));
+  }
+  g_ps1 -> Draw("APL");
   
 
+
+  if( inFileName2 != "NULL" )
+  {
+    TGraph* g_ps2 = new TGraph(inFileName2.c_str(),"%le,%lf");
+    
+    y0 = 0;
+    yMax = -999.;
+    for(int point = 0; point < g_ps2->GetN(); ++point)
+    {
+      g_ps2 -> GetPoint(point,x,y);
+      if( point == 0 ) y0 = y;
+      if( y > yMax ) yMax = y;
+    }
+    for(int point = 0; point < g_ps2->GetN(); ++point)
+    {
+      g_ps2 -> GetPoint(point,x,y);
+      g_ps2 -> SetPoint(point,1.E09*x-shift2,(y-y0)/(yMax-y0));
+    }
+
+    g_ps2 -> SetMarkerColor(kRed);
+    g_ps2 -> SetLineColor(kRed);
+    g_ps2 -> Draw("PL,same");
+  }
+  
+  /*
   float xBinWidth = 0.002;
   float xMin = -100.;
   float xMax = +200.;

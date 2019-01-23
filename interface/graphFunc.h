@@ -15,7 +15,20 @@ class graphFunc
   {
     graph_p = graph;
     nPoints_p = graph_p -> GetN();
-    graph_p -> GetPoint(0,x0_p,y0_p);
+
+    double x,y;
+    int point0 = 0;
+    for(int point = 0; point < nPoints_p; ++point)
+    {
+      graph_p -> GetPoint(point,x,y);
+      if( x >= 0. )
+      {
+        point0 = point;
+        break;
+      }
+    }
+    
+    graph_p -> GetPoint(point0,x0_p,y0_p);
     graph_p -> GetPoint(nPoints_p-1,xn_p,yn_p);
     
     fineBinWidth_p = fineBinWidth;
