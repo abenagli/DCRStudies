@@ -361,7 +361,7 @@ int main(int argc, char** argv)
   
   for(int iToy = 0; iToy < nToys; ++iToy)
   {
-    if( !debugMode && log2(iToy) == floor(log2(iToy)) )
+    if( !debugMode && ( (log2(iToy) == floor(log2(iToy))) || (iToy == nToys-1) ) )
     {
       std::cout << "\n>>> processing toy "   << iToy << " / " << nToys << std::endl;
       evt[0] = iToy;
