@@ -359,7 +359,7 @@ int main(int argc, char** argv)
   float* yAxis_sumNPhE_baseSub = new float[nPoints];
   float* yAxis_sumNPhE_CFD = new float[nPoints];
   
-  for(int iToy = 0; iToy < nToys; ++iToy)
+  for(int iToy = 1; iToy <= nToys; ++iToy)
   {
     if( !debugMode && ( (log2(iToy) == floor(log2(iToy))) || (iToy == nToys-1) ) )
     {
