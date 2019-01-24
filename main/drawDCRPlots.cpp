@@ -59,15 +59,12 @@ int main(int argc, char** argv)
   float xMax2;
   float yMin2;
   float yMax2;
+
+  TLine* line_30ps;
+  TLine* line_50ps;
   
-  float kFactor = 1.;
-  float tau_LE = 1.6; // in ns
-  float tau_S = 40.;  // in ns
-
-
-
-  //std::string label_DCRSub = "_baseSub";
-  std::string label_DCRSub = "_CFD";
+  std::string label_DCRSub = "_baseSub";
+  //std::string label_DCRSub = "_CFD";
   
   std::vector<float> thrs;
   thrs.push_back(1);
@@ -81,29 +78,42 @@ int main(int argc, char** argv)
   thrs.push_back(100);
   
   std::vector<int> nPhEs;
-  nPhEs.push_back(3);
-  nPhEs.push_back(5);
-  nPhEs.push_back(10);
-  nPhEs.push_back(20);
-  nPhEs.push_back(30);
-  nPhEs.push_back(50);
+  // nPhEs.push_back(3);
+  // nPhEs.push_back(5);
+  // nPhEs.push_back(10);
+  // nPhEs.push_back(20);
+  // nPhEs.push_back(30);
+  // nPhEs.push_back(50);
+  // nPhEs.push_back(100);
+  // nPhEs.push_back(200);
+  // nPhEs.push_back(300);
   nPhEs.push_back(100);
   nPhEs.push_back(200);
   nPhEs.push_back(300);
+  nPhEs.push_back(500);
+  nPhEs.push_back(1000);
+  nPhEs.push_back(2000);
+  nPhEs.push_back(3000);
+  nPhEs.push_back(5000);
+  nPhEs.push_back(9000);
+  nPhEs.push_back(13000);
+  nPhEs.push_back(20000);
   
   std::vector<float> DCRs;
   DCRs.push_back(0.);
-  DCRs.push_back(0.1);
-  DCRs.push_back(0.2);
-  DCRs.push_back(0.3);
-  DCRs.push_back(0.5);
+  // DCRs.push_back(0.1);
+  // DCRs.push_back(0.2);
+  // DCRs.push_back(0.3);
+  // DCRs.push_back(0.5);
   DCRs.push_back(1.00);
   DCRs.push_back(2.00);
   DCRs.push_back(3.00);
-  DCRs.push_back(5.00);
-  DCRs.push_back(10.00);
-  DCRs.push_back(20.00);
-  DCRs.push_back(30.00);
+  // DCRs.push_back(5.00);
+  // DCRs.push_back(10.00);
+  // DCRs.push_back(20.00);
+  // DCRs.push_back(30.00);
+
+
   
   //--- define inFile names
   TH1F* h_baselineRMS;
@@ -113,48 +123,54 @@ int main(int argc, char** argv)
     for(auto DCR : DCRs)
     {
       std::pair<int,float> dummy(nPhE,DCR);
-      inFileNames[dummy] = Form("plots/laser_2/studyDCR_nPhE%05d_DCR%07.3fGHz_SPTR%.3fns_%s_CFD00.400ns_nToys%d.root",nPhE,DCR,SPTR,inFileName_1pe.c_str(),nToys);
+      inFileNames[dummy] = Form("plots/scintillation/studyDCR_nPhE%05d_DCR%07.3fGHz_SPTR%.3fns_%s_CFD00.400ns_nToys%d.root",nPhE,DCR,SPTR,inFileName_1pe.c_str(),nToys);
     }
   }
   
   
   //--- define plot dir
-  std::string plotDir = Form("plots/laser_2/DCRPlots_SPTR%.3fns_%s",SPTR,inFileName_1pe.c_str());
+  std::string plotDir = Form("plots/scintillation/DCRPlots_SPTR%.3fns_%s",SPTR,inFileName_1pe.c_str());
   system(Form("mkdir %s",plotDir.c_str()));
   
-  /*
+  
   //--- plots vs. nPhE
   std::cout << "\n>>> plots vs. nPhE" << std::endl;
-  xMin1 = 1;
-  xMax1 = 1000.;
-  yMin1 = 0.1;
-  yMax1 = 1000.;
-  xMin2 = 1;
-  xMax2 = 1000.;
-  yMin2 = 0.1;
-  yMax2 = 1000.;
+  xMin1 = 10.;
+  xMax1 = 100000.;
+  yMin1 = 1.;
+  yMax1 = 10000.;
+  xMin2 = 10.;
+  xMax2 = 100000.;
+  yMin2 = 1.;
+  yMax2 = 10000.;
   title1 = ";N_{p.e.};#sigma_{t} [ps]";
   title2 = ";N_{p.e.};#sigma_{DCR} [ps]";
 
-  nPhEs.clear();
-  nPhEs.push_back(3);
-  nPhEs.push_back(5);
-  nPhEs.push_back(10);
-  nPhEs.push_back(20);
-  nPhEs.push_back(30);
-  nPhEs.push_back(50);
-  nPhEs.push_back(100);
-  nPhEs.push_back(200);
-  nPhEs.push_back(300);
+  line_30ps = new TLine(xMin1,30.,xMax1,30.);
+  line_30ps -> SetLineStyle(7);
   
-  DCRs.clear();
-  DCRs.push_back(0.);
-  DCRs.push_back(0.5);
-  DCRs.push_back(1.00);
-  DCRs.push_back(5.00);
-  DCRs.push_back(10.00);
-  DCRs.push_back(20.00);
-  DCRs.push_back(30.00);
+  line_50ps = new TLine(xMin1,50.,xMax1,50.);
+  line_50ps -> SetLineStyle(7);  
+
+  // nPhEs.clear();
+  // nPhEs.push_back(3);
+  // nPhEs.push_back(5);
+  // nPhEs.push_back(10);
+  // nPhEs.push_back(20);
+  // nPhEs.push_back(30);
+  // nPhEs.push_back(50);
+  // nPhEs.push_back(100);
+  // nPhEs.push_back(200);
+  // nPhEs.push_back(300);
+  
+  // DCRs.clear();
+  // DCRs.push_back(0.);
+  // DCRs.push_back(0.5);
+  // DCRs.push_back(1.00);
+  // DCRs.push_back(5.00);
+  // DCRs.push_back(10.00);
+  // DCRs.push_back(20.00);
+  // DCRs.push_back(30.00);
   
   for(auto thr : thrs)
   {
@@ -216,22 +232,22 @@ int main(int argc, char** argv)
         
         if( histo->Integral() > 100 )
         {
-          TF1* fitFunc = new TF1("fitFunc","gaus(0)",22.1,histo->GetMean()+2.*histo->GetRMS());
-          fitFunc -> SetParameters(histo->GetMaximum(),histo->GetMean(),histo->GetRMS());
-          histo -> Fit("fitFunc","QNRLS+");
-          sigma_tot = 1000. * fabs(fitFunc -> GetParameter(2));
-          sigma_tot_err = 1000. * fabs(fitFunc -> GetParError(2));
-          delete fitFunc;
+          // TF1* fitFunc = new TF1("fitFunc","gaus(0)",22.1,histo->GetMean()+2.*histo->GetRMS());
+          // fitFunc -> SetParameters(histo->GetMaximum(),histo->GetMean(),histo->GetRMS());
+          // histo -> Fit("fitFunc","QNRLS+");
+          // sigma_tot = 1000. * fabs(fitFunc -> GetParameter(2));
+          // sigma_tot_err = 1000. * fabs(fitFunc -> GetParError(2));
+          // delete fitFunc;
           
-          // float* vals = new float[6];
-          // FindSmallestInterval(vals,histo,0.68,21.01);
-          // float mean = vals[0];
-          // float min = vals[4];
-          // float max = vals[5];
-          // float delta = max-min;
-          // float effSigma = 0.5*delta;
-          // sigma_tot = 1000. * effSigma;
-          // sigma_tot_err = 1000. * histo->GetRMSError();
+          float* vals = new float[6];
+          FindSmallestInterval(vals,histo,0.68,22.01);
+          float mean = vals[0];
+          float min = vals[4];
+          float max = vals[5];
+          float delta = max-min;
+          float effSigma = 0.5*delta;
+          sigma_tot = 1000. * effSigma;
+          sigma_tot_err = 1000. * histo->GetRMSError();
           
           // sigma_tot = 1000. * histo->GetRMSError();
           // sigma_tot_err = 1000. * histo->GetRMSError();
@@ -312,7 +328,10 @@ int main(int argc, char** argv)
         latexR -> SetTextSize(0.03);
         latexR ->SetTextAlign(11);
         latexR -> Draw("same");
-
+        
+        line_30ps -> Draw("same");
+        line_50ps -> Draw("same");
+        
         if( g_tRes_LE->GetN() > 0 )
         {
           TF1* f_model = new TF1(Form("f_model%07.3GHz",DCR),"[0]/(x)^[1]",0.,100000);
@@ -320,10 +339,11 @@ int main(int argc, char** argv)
           f_model -> SetLineStyle(2);
           f_model -> SetLineWidth(1);
           f_model -> SetLineColor(51+int(50/DCRs.size())*DCRIt);
-          g_tRes_LE -> Fit(f_model,"QNRS+");
+          g_tRes_LE -> Fit(f_model,"QNRS+","",990,100000.);
           f_model -> Draw("same");
           
-          TLatex* latex_model = new TLatex(30.,1.,Form("f(N_{pe}) = %.0f ps / x^{%.2f}",f_model->GetParameter(0),f_model->GetParameter(1)));
+          TLatex* latex_model = new TLatex(0.5,0.2,Form("f(N_{pe}) = %.0f ps / x^{%.2f}",f_model->GetParameter(0),f_model->GetParameter(1)));
+          latex_model -> SetNDC();
           latex_model -> SetTextFont(42);
           latex_model -> SetTextSize(0.04);
           latex_model -> SetTextColor(51+int(50/DCRs.size())*DCRIt);
@@ -344,6 +364,9 @@ int main(int argc, char** argv)
       {
         latexL -> Draw("same");
         latexR -> Draw("same");
+        
+        line_30ps -> Draw("same");
+        line_50ps -> Draw("same");        
       }
 
       if( DCR > 0 )
@@ -358,7 +381,8 @@ int main(int argc, char** argv)
           g_tResDCR_LE -> Fit(f_model,"QNRS+","",0.9,100000.);
           f_model -> Draw("same");
           
-          TLatex* latex_model = new TLatex(1.5,pow(10,0.7+(DCRIt-1)/(DCRs.size()-1.)),Form("f(N_{pe}) = %.0f ps / x^{%.2f}",f_model->GetParameter(0),f_model->GetParameter(1)));
+          TLatex* latex_model = new TLatex(0.3,0.20+0.04*DCRIt,Form("DCR = %.2f GHz   f(N_{pe}) = %.0f ps / x^{%.2f}",DCR,f_model->GetParameter(0),f_model->GetParameter(1)));
+          latex_model -> SetNDC();
           latex_model -> SetTextFont(42);
           latex_model -> SetTextSize(0.03);
           latex_model -> SetTextColor(51+int(50/DCRs.size())*DCRIt);
@@ -373,8 +397,6 @@ int main(int argc, char** argv)
 
     c -> cd(1);
     legend -> Draw("same");
-    c -> cd(2);
-    legend -> Draw("same");
     
     c -> Print(Form("%s/c1_tRes_vs_nPhE_thr%06.1f_%s.png",plotDir.c_str(),thr,label_DCRSub.c_str()));
     
@@ -383,37 +405,37 @@ int main(int argc, char** argv)
   
   
   //--- plots vs. DCR
-  nPhEs.clear();
-  nPhEs.push_back(5);
-  nPhEs.push_back(10);
-  nPhEs.push_back(30);
-  nPhEs.push_back(50);
-  nPhEs.push_back(100);
-  nPhEs.push_back(200);
+  // nPhEs.clear();
+  // nPhEs.push_back(5);
+  // nPhEs.push_back(10);
+  // nPhEs.push_back(30);
+  // nPhEs.push_back(50);
+  // nPhEs.push_back(100);
+  // nPhEs.push_back(200);
   
-  DCRs.clear();
-  DCRs.push_back(0.);
-  DCRs.push_back(0.1);
-  DCRs.push_back(0.2);
-  DCRs.push_back(0.3);
-  DCRs.push_back(0.5);
-  DCRs.push_back(1.00);
-  DCRs.push_back(2.00);
-  DCRs.push_back(3.00);
-  DCRs.push_back(5.00);
-  DCRs.push_back(10.00);
-  DCRs.push_back(20.00);
-  DCRs.push_back(30.00);
+  // DCRs.clear();
+  // DCRs.push_back(0.);
+  // DCRs.push_back(0.1);
+  // DCRs.push_back(0.2);
+  // DCRs.push_back(0.3);
+  // DCRs.push_back(0.5);
+  // DCRs.push_back(1.00);
+  // DCRs.push_back(2.00);
+  // DCRs.push_back(3.00);
+  // DCRs.push_back(5.00);
+  // DCRs.push_back(10.00);
+  // DCRs.push_back(20.00);
+  // DCRs.push_back(30.00);
   
   std::cout << "\n>>> plots vs. DCR" << std::endl;
   xMin1 = 0.001;
   xMax1 = 100.;
-  yMin1 = 0.1;
-  yMax1 = 1000.;
+  yMin1 = 1.;
+  yMax1 = 10000.;
   xMin2 = 0.01;
   xMax2 = 100.;
-  yMin2 = 0.1;
-  yMax2 = 1000.;
+  yMin2 = 1.;
+  yMax2 = 10000.;
   title1 = ";DCR [GHz];#sigma_{t} [ps]";
   title2 = ";DCR [GHz];#sigma_{DCR} [ps]";
   
@@ -610,8 +632,8 @@ int main(int argc, char** argv)
     
   } //--- plots vs. DCR
   
-  */
-
+  
+  
 
 
   
@@ -627,26 +649,26 @@ int main(int argc, char** argv)
   yMax2 = 1000.;
   title1 = ";N_{p.e.};#sigma_{t} [ps]";
   title2 = ";N_{p.e.};#sigma_{DCR} [ps]";
-
-  nPhEs.clear();
-  nPhEs.push_back(3);
-  nPhEs.push_back(5);
-  nPhEs.push_back(10);
-  nPhEs.push_back(20);
-  nPhEs.push_back(30);
-  nPhEs.push_back(50);
-  nPhEs.push_back(100);
-  nPhEs.push_back(200);
-  nPhEs.push_back(300);
   
-  DCRs.clear();
-  DCRs.push_back(0.);
-  DCRs.push_back(0.5);
-  DCRs.push_back(1.00);
-  DCRs.push_back(5.00);
-  DCRs.push_back(10.00);
-  DCRs.push_back(20.00);
-  DCRs.push_back(30.00);
+  // nPhEs.clear();
+  // nPhEs.push_back(3);
+  // nPhEs.push_back(5);
+  // nPhEs.push_back(10);
+  // nPhEs.push_back(20);
+  // nPhEs.push_back(30);
+  // nPhEs.push_back(50);
+  // nPhEs.push_back(100);
+  // nPhEs.push_back(200);
+  // nPhEs.push_back(300);
+  
+  // DCRs.clear();
+  // DCRs.push_back(0.);
+  // DCRs.push_back(0.5);
+  // DCRs.push_back(1.00);
+  // DCRs.push_back(5.00);
+  // DCRs.push_back(10.00);
+  // DCRs.push_back(20.00);
+  // DCRs.push_back(30.00);
   
   TCanvas* c = new TCanvas(Form("c1_tRes_vs_nPhE_allDCR"),Form("c1_tRes_vs_nPhE_allDCR"),2400,1200);
   c -> Divide(2,1);
@@ -845,8 +867,12 @@ int main(int argc, char** argv)
   c -> Print(Form("%s/c1_tRes_vs_nPhEFit%s.png",plotDir.c_str(),label_DCRSub.c_str()));
   
   //--- plots vs. nPhE
+  
 
 
+
+
+  
   /*
   //--- plots vs. nPhE
   xMin1 = 2;

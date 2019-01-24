@@ -317,8 +317,8 @@ int main(int argc, char** argv)
   TFile* outFile = TFile::Open(outputFileName.c_str(),"RECREATE");
   outFile -> cd();
   
-  TH1F* h_baseline = new TH1F("h_baseline","",2000,-10.,1990.);
-  TH1F* h_baselineRMS = new TH1F("h_baselineRMS","",2000,0.,200.);
+  TH1F* h_baseline = new TH1F("h_baseline","",5000,-10.,4990.);
+  TH1F* h_baselineRMS = new TH1F("h_baselineRMS","",5000,0.,500.);
   
   std::map<float,TH1F*> h1_timeNthPhE;
   std::map<float,TH1F*> h1_timeAvgNPhE;
@@ -457,8 +457,8 @@ int main(int argc, char** argv)
       baseline = SubtractBaseline(baselineXmin,baselineXmax,nPoints,xAxis,yAxis_sumNPhE_baseSub);
     else
       baseline = SubtractBaseline(xMin,xMin+50.,nPoints,xAxis,yAxis_sumNPhE_baseSub);
-    h_baseline -> Fill( baseline.first );
-    h_baselineRMS -> Fill( baseline.second );
+    h_baseline -> Fill( baseline.first/max_1pe );
+    h_baselineRMS -> Fill( baseline.second/max_1pe );
     
 
     //--- implement CFD
