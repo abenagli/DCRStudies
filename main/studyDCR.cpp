@@ -161,6 +161,7 @@ int main(int argc, char** argv)
 
   
   //--- other global variables
+  if( argc > 3 ) seed = atoi(argv[3]);
   gRandom = new TRandom3(seed);
   TRandom3 r(seed);
   double x0,y0;
