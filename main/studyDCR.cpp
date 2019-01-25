@@ -464,8 +464,7 @@ int main(int argc, char** argv)
 
     //--- implement CFD
     if( CFD )
-      ImplementCFD(int(CFDDelay/(1.*xBinWidth/overSampling)),nPoints,yAxis_sumNPhE_CFD,yAxis_sumNPhE);
-    
+      ImplementCFD(int(CFDDelay/(1.*xBinWidth)),nPoints,yAxis_sumNPhE_CFD,yAxis_sumNPhE);
     
     //--- discriminate the pulseshape
     if( debugMode ) std::cout << ">>>>>> discriminating pulseshape: " << std::endl;
